@@ -1,3 +1,6 @@
+using Cinemachine;
+using Fusion;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -14,8 +17,11 @@ public abstract class BaseNPC : MonoBehaviour
     protected WanderPointProvider wanderProvider;
 
     [Header("이벤트 채널 - Listening to")]
-    [SerializeField] private BoolEventChannelSO OnMaskDanceStart;
     [SerializeField] private BoolEventChannelSO OnGroupDanceStart;
+    [SerializeField] public BoolEventChannelSO OnMaskDanceStart;
+    [SerializeField] public IntEventChannelSO GroupNumberChannel;
+    [SerializeField] public IntEventChannelSO DanceIndexChannel;
+    
     public enum ActionState
     {
         // 가면 행동
