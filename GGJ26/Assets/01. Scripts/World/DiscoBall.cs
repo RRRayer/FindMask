@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using DG.Tweening;
+using UnityEngine.Rendering.Universal; // For Light2D
 
 public class DiscoBall : MonoBehaviour
 {
@@ -13,37 +15,73 @@ public class DiscoBall : MonoBehaviour
     [Header("라이트 설정")]
     public Light[] allSpotlights;
     public int numberOfGroups = 3;
-
+    public Light centralPointLight;
+    public Color[] discoColors;
+    
     [Header("그룹 전환 설정")]
     public float groupActiveDuration = 5f;
-
-    [Header("중앙 PointLight 설정")]
-    public Light centralPointLight;
-
-    [Header("색상 설정")]
-    public Color[] discoColors;
 
     [Header("점멸 효과 설정")]
     public float minBlinkInterval = 0.5f;
     public float maxBlinkInterval = 1.0f;
     public float minOnTime = 0.3f;
     public float maxOnTime = 0.7f;
-    public int flashCountPerColor = 1;
 
     [Header("실시간 회전 설정")]
     public float lightRotationSpeed = 0.5f;
     public Vector2 minMaxXRotation = new Vector2(45f, 90f);
     public bool randomizeYRotation = true;
-
-    [Header("회전 속도")]
     public float rotationSpeed = 30f;
 
+    [Header("연출 설정")]
+    [SerializeField] private GameObject discoObject; // 디스코볼 실제 오브젝트
+    [SerializeField] private Light globalLight;
+    [SerializeField] private float yOffset = 5f;
+    [SerializeField] private float transitionDuration = 1.5f;
+
     private List<List<Light>> _logicalLightGroups = new List<List<Light>>();
-    private List<Coroutine> _runningCoroutines = new List<Coroutine>(); // 실행중인 코루틴 관리 리스트
     private bool _isDiscoActive = false;
+    private Vector3 _startPosition;
+    private float _startIntensity;
+    private Coroutine _discoLoopCoroutine;
 
     private void Awake()
     {
+        if (discoObject != null)
+        {
+            _startPosition = discoObject.transform.position;
+        }
+        
+
+        if (globalLight == null) // If globalLight is not assigned in the Inspector
+        {
+            // Try to find a Light2D component in the scene first
+            globalLight = FindObjectOfType<Light>();
+            
+            if (globalLight != null)
+            {
+                Debug.LogWarning("DiscoBall: GlobalLight2D was automatically found in the scene.");
+            }
+            else
+            {
+                // If no Light2D, try to find a regular Light component
+                globalLight = FindObjectOfType<Light>();
+                if (globalLight != null)
+                {
+                    Debug.LogWarning("DiscoBall: GlobalLight (3D Light) was automatically found in the scene.");
+                }
+                else
+                {
+                    Debug.LogError("DiscoBall: GlobalLight (Light or Light2D) not assigned and not found in scene. Disco lighting effects may not work correctly.");
+                }
+            }
+        }
+        
+        if (globalLight != null) // Now check if globalLight is assigned (either manually or found)
+        {
+            _startIntensity = globalLight.intensity;
+        }
+
         // 조명을 논리적 그룹으로 나누는 로직
         if (allSpotlights != null && allSpotlights.Length > 0)
         {
@@ -61,56 +99,82 @@ public class DiscoBall : MonoBehaviour
 
     private void OnEnable()
     {
-        // 이벤트 채널에 메소드 등록
         if (startDiscoEvent != null) startDiscoEvent.OnEventRaised += StartDisco;
         if (stopDiscoEvent != null) stopDiscoEvent.OnEventRaised += StopDisco;
     }
 
     private void OnDisable()
     {
-        // 이벤트 채널에서 메소드 등록 해제 (메모리 누수 방지)
         if (startDiscoEvent != null) startDiscoEvent.OnEventRaised -= StartDisco;
         if (stopDiscoEvent != null) stopDiscoEvent.OnEventRaised -= StopDisco;
         
-        // 비활성화 시 확실하게 모든 효과 중지
-        StopDisco();
+        StopAllCoroutines();
+        // DOTween 시퀀스도 확실하게 중지
+        DOTween.Kill(this);
     }
 
     void Update()
     {
-        // 디스코볼 자체의 회전은 활성화 여부와 상관없이 계속 될 수 있습니다.
-        transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime);
+        if (discoObject != null && discoObject.activeSelf)
+        {
+            discoObject.transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime);
+        }
     }
 
-    /// <summary>
-    /// 디스코 효과를 시작하는 메소드 (이벤트에 의해 호출됨)
-    /// </summary>
     public void StartDisco()
     {
-        if (_isDiscoActive) return;
-        _isDiscoActive = true;
-
-        // 이전에 실행중인 모든 코루틴을 확실히 정리
-        StopAllCoroutines();
+        if (_isDiscoActive || discoObject == null) return;
         
-        // 새로운 마스터 코루틴을 시작
-        StartCoroutine(DiscoLoop());
+        StopAllCoroutines();
+        StartCoroutine(StartDiscoSequence());
     }
 
-    /// <summary>
-    /// 디스코 효과를 중지하는 메소드 (이벤트에 의해 호출됨)
-    /// </summary>
     public void StopDisco()
     {
-        if (!_isDiscoActive) return;
-        _isDiscoActive = false;
+        if (!_isDiscoActive || discoObject == null) return;
 
-        // 모든 코루틴 중지 (가장 확실한 방법)
         StopAllCoroutines();
+        StartCoroutine(StopDiscoSequence());
+    }
 
-        // 모든 조명 끄기
+    private IEnumerator StartDiscoSequence()
+    {
+        _isDiscoActive = true;
+        discoObject.SetActive(true);
+        
+        Sequence sequence = DOTween.Sequence();
+        if (globalLight != null)
+        {
+            sequence.Join(globalLight.DOIntensity(0.1f, transitionDuration));
+        }
+        sequence.Join(discoObject.transform.DOMoveY(_startPosition.y - yOffset, transitionDuration));
+        
+        yield return sequence.WaitForCompletion();
+
+        _discoLoopCoroutine = StartCoroutine(DiscoLoop());
+    }
+
+    private IEnumerator StopDiscoSequence()
+    {
+        _isDiscoActive = false;
+        if (_discoLoopCoroutine != null)
+        {
+            StopCoroutine(_discoLoopCoroutine);
+            _discoLoopCoroutine = null;
+        }
+        
         foreach (var group in _logicalLightGroups) TurnOffLightsInGroup(group);
         if (centralPointLight != null) centralPointLight.enabled = false;
+        
+        Sequence sequence = DOTween.Sequence();
+        if (globalLight != null)
+        {
+            sequence.Join(globalLight.DOIntensity(_startIntensity, transitionDuration));
+        }
+        sequence.Join(discoObject.transform.DOMoveY(_startPosition.y, transitionDuration));
+        sequence.OnComplete(() => discoObject.SetActive(false));
+        
+        yield return sequence.WaitForCompletion();
     }
     
     IEnumerator DiscoLoop()
@@ -136,29 +200,25 @@ public class DiscoBall : MonoBehaviour
             groupSwitchTimer += deltaTime;
             blinkTimer += deltaTime;
 
-            // 1. 그룹 전환 로직
             if (groupSwitchTimer >= groupActiveDuration && _logicalLightGroups.Count > 1)
             {
                 groupSwitchTimer = 0f;
-                TurnOnLightsInGroup(currentGroup, false); // 이전 그룹 끄기
+                TurnOnLightsInGroup(currentGroup, false);
 
                 currentGroupIndex = (currentGroupIndex + 1) % _logicalLightGroups.Count;
                 currentGroup = _logicalLightGroups[currentGroupIndex];
                 
                 InitializeRotationsForGroup(currentGroup, fromRotations, toRotations, lerpProgress);
-                lightsAreOn = false; // 새 그룹의 점멸 상태 초기화
+                lightsAreOn = false; 
                 blinkTimer = 0f;
             }
 
-            // 2. 점멸 로직 (스포트라이트와 중앙 조명 동시 제어)
             if (blinkTimer >= currentBlinkDuration)
             {
                 blinkTimer = 0f;
                 lightsAreOn = !lightsAreOn;
 
-                // 스포트라이트 점멸 및 색상 변경
                 TurnOnLightsInGroup(currentGroup, lightsAreOn);
-                // 중앙 조명 점멸 및 색상 변경
                 if (centralPointLight != null) centralPointLight.enabled = lightsAreOn;
 
                 if (lightsAreOn)
@@ -175,11 +235,10 @@ public class DiscoBall : MonoBehaviour
                     currentBlinkDuration = Random.Range(minBlinkInterval, maxBlinkInterval);
                 }
             }
-
-            // 3. 회전 로직 (점멸 상태와 무관하게 항상 업데이트)
+            
             UpdateLightRotations(currentGroup, fromRotations, toRotations, lerpProgress);
             
-            yield return null; // 다음 프레임까지 대기
+            yield return null;
         }
     }
 
