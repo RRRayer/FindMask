@@ -54,14 +54,14 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    public void StartMatchmaking()
+    public async void StartMatchmaking()
     {
         if (isStarting)
         {
             return;
         }
 
-        _ = StartMatchmakingAsync();
+        await StartMatchmakingAsync();
     }
 
     private async Task StartMatchmakingAsync()
@@ -247,7 +247,11 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         if (runner.TryGetPlayerObject(runner.LocalPlayer, out var playerObject) == false || playerObject == null)
         {
-            return;
+            playerObject = FindLocalPlayerObject(runner);
+            if (playerObject == null)
+            {
+                return;
+            }
         }
 
         var starterInputs = playerObject.GetComponent<StarterAssets.StarterAssetsInputs>();
@@ -265,7 +269,27 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         // Consume one-shot inputs so they don't latch across ticks.
         starterInputs.jump = false;
-        starterInputs.sprint = false;
+    }
+
+    private NetworkObject FindLocalPlayerObject(NetworkRunner runner)
+    {
+        var objects = UnityEngine.Object.FindObjectsByType<NetworkObject>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
+        if (objects == null)
+        {
+            return null;
+        }
+
+        foreach (var obj in objects)
+        {
+            if (obj != null && obj.InputAuthority == runner.LocalPlayer)
+            {
+                return obj;
+            }
+        }
+
+        return null;
     }
 
     public void OnConnectedToServer(NetworkRunner runner)
@@ -326,6 +350,7 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
     {
     }
+
 
     public void CancelMatchmaking()
     {

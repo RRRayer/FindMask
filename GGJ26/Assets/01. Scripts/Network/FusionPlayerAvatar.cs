@@ -19,26 +19,21 @@ public class FusionPlayerAvatar : NetworkBehaviour
     private void Awake()
     {
         var hasNetworkMotor = GetComponent<FusionThirdPersonMotor>() != null;
-        if (hasNetworkMotor)
-        {
-            var thirdPerson = GetComponent<ThirdPersonController>();
-            if (thirdPerson != null)
-            {
-                thirdPerson.enabled = false;
-            }
-        }
 
         if (localOnlyBehaviours == null || localOnlyBehaviours.Length == 0)
         {
             var behaviours = new List<UnityEngine.Behaviour>();
 
-            if (hasNetworkMotor == false)
+            var controller = GetComponent<ThirdPersonController>();
+            if (controller != null)
             {
-                var controller = GetComponent<ThirdPersonController>();
-                if (controller != null)
-                {
-                    behaviours.Add(controller);
-                }
+                behaviours.Add(controller);
+            }
+
+            var cameraController = GetComponent<FusionThirdPersonCamera>();
+            if (cameraController != null)
+            {
+                behaviours.Add(cameraController);
             }
 
             var inputs = GetComponent<StarterAssetsInputs>();
@@ -57,6 +52,15 @@ public class FusionPlayerAvatar : NetworkBehaviour
         }
 
         playerInput = GetComponent<PlayerInput>();
+
+        if (hasNetworkMotor)
+        {
+            var thirdPerson = GetComponent<ThirdPersonController>();
+            if (thirdPerson != null)
+            {
+                thirdPerson.enabled = false;
+            }
+        }
     }
 
     public override void Spawned()
@@ -94,6 +98,11 @@ public class FusionPlayerAvatar : NetworkBehaviour
 
     private void ApplyAuthorityState()
     {
+        if (Object == null)
+        {
+            return;
+        }
+
         var isLocal = Object.HasInputAuthority || (Runner != null && Object.InputAuthority == Runner.LocalPlayer);
         if (lastIsLocal.HasValue && lastIsLocal.Value == isLocal)
         {
@@ -151,9 +160,11 @@ public class FusionPlayerAvatar : NetworkBehaviour
             }
         }
 
+
         if (isLocal && Time.timeScale == 0f)
         {
             Debug.LogWarning("Time.timeScale is 0 in Game scene. Movement and gravity will not update.");
         }
     }
+
 }
