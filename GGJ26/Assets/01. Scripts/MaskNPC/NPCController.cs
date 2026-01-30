@@ -75,6 +75,9 @@ public class NPCController : MonoBehaviour
     private int _animIDJump;
     private int _animIDFreeFall;
     private int _animIDMotionSpeed;
+    private int _animIDStartDance; // New
+    private int _animIDStopDance; // New
+    private int _animIDDanceIndex; // New
 
     // components
     private Animator _animator;
@@ -115,7 +118,6 @@ public class NPCController : MonoBehaviour
     /// <summary>
     /// Makes the NPC attempt to jump. Called by an AI controller.
     /// </summary>
-    /// <returns>True if the jump was successfully triggered, false otherwise.</returns>
     public bool TriggerJump()
     {
         if (Grounded && _jumpTimeoutDelta <= 0.0f)
@@ -123,8 +125,28 @@ public class NPCController : MonoBehaviour
             _shouldJump = true;
             return true;
         }
-
         return false;
+    }
+
+    /// <summary>
+    /// Starts one of the dance animations.
+    /// </summary>
+    /// <param name="danceIndex">The index of the dance to play (e.g., 0-3).</param>
+    public void StartDance(int danceIndex)
+    {
+        // Make the NPC stop moving
+        SetMovement(Vector3.zero, false);
+    
+        _animator.SetInteger(_animIDDanceIndex, danceIndex);
+        _animator.SetTrigger(_animIDStartDance);
+    }
+
+    /// <summary>
+    /// Stops the dance animation and returns to normal locomotion.
+    /// </summary>
+    public void StopDance()
+    {
+        _animator.SetTrigger(_animIDStopDance);
     }
 
     #endregion
@@ -136,6 +158,9 @@ public class NPCController : MonoBehaviour
         _animIDJump = Animator.StringToHash("Jump");
         _animIDFreeFall = Animator.StringToHash("FreeFall");
         _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
+        _animIDStartDance = Animator.StringToHash("StartDance"); // New
+        _animIDStopDance = Animator.StringToHash("StopDance");   // New
+        _animIDDanceIndex = Animator.StringToHash("DanceIndex"); // New
     }
 
     private void GroundedCheck()

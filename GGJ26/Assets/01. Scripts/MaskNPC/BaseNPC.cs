@@ -13,11 +13,16 @@ public abstract class BaseNPC : MonoBehaviour
     protected NavMeshAgent agent;
     protected WanderPointProvider wanderProvider;
 
-
     public enum ActionState
     {
+        // 가면 행동
         MaskBehavior,
-        Dance
+
+        // 가면 댄스
+        MaskDance,
+
+        // 단체 댄스
+        GroupDance
     }
 
     private ActionState currentState = ActionState.MaskBehavior;
@@ -60,6 +65,14 @@ public abstract class BaseNPC : MonoBehaviour
         if (currentState == ActionState.MaskBehavior)
         {
             ExecuteMaskBehavior();
+        }
+        else if (currentState == ActionState.MaskDance)
+        {
+            ExecuteMaskDance();
+        }
+        else if (currentState == ActionState.GroupDance)
+        {
+            ExecuteGroupDance();
         }
     }
 

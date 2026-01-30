@@ -99,4 +99,9 @@ public class BlueNPC : BaseNPC
             agent.SetDestination(destination);
         }
     }
+
+    protected override void ExecuteMaskDance()
+    {
+        throw new System.NotImplementedException();
+    }
 }

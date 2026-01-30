@@ -116,5 +116,10 @@ public class RedNPC : BaseNPC
             agent.SetDestination(destination);
         }
     }
+
+    protected override void ExecuteMaskDance()
+    {
+        throw new System.NotImplementedException();
+    }
 }
 

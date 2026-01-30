@@ -98,4 +98,9 @@ public class GreenNPC : BaseNPC
             agent.ResetPath();
         }
     }
+
+    protected override void ExecuteMaskDance()
+    {
+        throw new System.NotImplementedException();
+    }
 }
