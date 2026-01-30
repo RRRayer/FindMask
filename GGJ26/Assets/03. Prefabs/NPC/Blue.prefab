@@ -387,7 +387,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2309816035768612337}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -2.549, y: 0.1, z: 2.215}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -551,6 +551,7 @@ MonoBehaviour:
   OnMaskDanceStart: {fileID: 11400000, guid: e1beaed332aa3304c9cafd797908fb3f, type: 2}
   GroupNumberChannel: {fileID: 0}
   DanceIndexChannel: {fileID: 0}
+  DanceIndexChannel: {fileID: 11400000, guid: bff2d00913296dc43a8c646622157e62, type: 2}
   stoppingDistance: 1.5
   WalkDuration:
   - 4

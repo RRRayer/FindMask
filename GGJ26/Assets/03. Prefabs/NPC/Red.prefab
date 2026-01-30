@@ -1060,6 +1060,7 @@ MonoBehaviour:
   OnMaskDanceStart: {fileID: 11400000, guid: 34262afc5d6fffa449000d8b22b666df, type: 2}
   GroupNumberChannel: {fileID: 0}
   DanceIndexChannel: {fileID: 0}
+  DanceIndexChannel: {fileID: 11400000, guid: 455fcfc713ebbea40a2355c6b9a7581e, type: 2}
   stoppingDistance: 1.5
   RunDuration:
   - 2
