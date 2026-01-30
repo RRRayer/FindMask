@@ -75,9 +75,9 @@ public class NPCController : MonoBehaviour
     private int _animIDJump;
     private int _animIDFreeFall;
     private int _animIDMotionSpeed;
-    private int _animIDStartDance; // New
-    private int _animIDStopDance; // New
-    private int _animIDDanceIndex; // New
+    private int _animIDStartDance; 
+    private int _animIDStopDance; 
+    private int _animIDDanceIndex; 
 
     // components
     private Animator _animator;
@@ -158,9 +158,9 @@ public class NPCController : MonoBehaviour
         _animIDJump = Animator.StringToHash("Jump");
         _animIDFreeFall = Animator.StringToHash("FreeFall");
         _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
-        _animIDStartDance = Animator.StringToHash("StartDance"); // New
-        _animIDStopDance = Animator.StringToHash("StopDance");   // New
-        _animIDDanceIndex = Animator.StringToHash("DanceIndex"); // New
+        _animIDStartDance = Animator.StringToHash("StartDance"); 
+        _animIDStopDance = Animator.StringToHash("StopDance");   
+        _animIDDanceIndex = Animator.StringToHash("DanceIndex"); 
     }
 
     private void GroundedCheck()

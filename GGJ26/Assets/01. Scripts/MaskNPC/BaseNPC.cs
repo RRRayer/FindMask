@@ -25,7 +25,7 @@ public abstract class BaseNPC : MonoBehaviour
         GroupDance
     }
 
-    private ActionState currentState = ActionState.MaskBehavior;
+    private ActionState currentState = ActionState.GroupDance;
 
 
     /// <summary>
@@ -53,7 +53,7 @@ public abstract class BaseNPC : MonoBehaviour
 
     private void GameStart()
     {
-        currentState = ActionState.MaskBehavior;
+        currentState = ActionState.GroupDance;
     }
 
     /// <summary>
@@ -83,10 +83,9 @@ public abstract class BaseNPC : MonoBehaviour
     protected abstract void ExecuteMaskBehavior();
 
     protected abstract void ExecuteMaskDance();
-    protected virtual void ExecuteGroupDance()
+    protected void ExecuteGroupDance()
     {
-        // 기본 구현은 비어있습니다.
-        // 필요에 따라 자식 클래스에서 재정의할 수 있습니다.
+
     }
     public float RandomRangePicker(float[] range)
     {
