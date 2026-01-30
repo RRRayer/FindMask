@@ -1,0 +1,356 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Fusion;
+using Fusion.Sockets;
+using StarterAssets;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
+{
+    [Header("Session")]
+    [SerializeField] private string sessionName = "GGJ26";
+    [SerializeField] private int maxPlayers = 4;
+    [SerializeField] private string gameScenePath = "Assets/00. Scenes/Game.unity";
+    [SerializeField] private bool autoStartOnAwake = false;
+
+    [Header("Player")]
+    [SerializeField] private NetworkObject playerPrefab;
+    [SerializeField] private float fallbackSpawnRadius = 4f;
+
+    private readonly Dictionary<PlayerRef, NetworkObject> spawnedPlayers = new Dictionary<PlayerRef, NetworkObject>();
+    private readonly List<NetworkSpawnPoint> spawnPoints = new List<NetworkSpawnPoint>();
+
+    public event Action<bool> MatchmakingStateChanged;
+
+    private NetworkRunner runner;
+    private bool isStarting = false;
+    private bool isMatchmaking = false;
+    private bool cancelRequested = false;
+
+    private void Awake()
+    {
+        runner = GetComponent<NetworkRunner>();
+        if (runner == null)
+        {
+            runner = gameObject.AddComponent<NetworkRunner>();
+        }
+
+        runner.ProvideInput = true;
+
+        if (GetComponent<NetworkSceneManagerDefault>() == null)
+        {
+            gameObject.AddComponent<NetworkSceneManagerDefault>();
+        }
+    }
+
+    private void Start()
+    {
+        if (autoStartOnAwake)
+        {
+            StartMatchmaking();
+        }
+    }
+
+    public void StartMatchmaking()
+    {
+        if (isStarting)
+        {
+            return;
+        }
+
+        _ = StartMatchmakingAsync();
+    }
+
+    private async Task StartMatchmakingAsync()
+    {
+        isStarting = true;
+        cancelRequested = false;
+        SetMatchmakingState(true);
+
+        runner.AddCallbacks(this);
+        runner.MakeDontDestroyOnLoad(gameObject);
+
+        var sceneManager = GetComponent<NetworkSceneManagerDefault>();
+        var sceneIndex = SceneManager.GetActiveScene().buildIndex;
+
+        var startArgs = new StartGameArgs
+        {
+            GameMode = GameMode.Shared,
+            SessionName = sessionName,
+            PlayerCount = maxPlayers,
+            Scene = SceneRef.FromIndex(sceneIndex),
+            SceneManager = sceneManager
+        };
+
+        var result = await runner.StartGame(startArgs);
+        if (result.Ok == false)
+        {
+            isStarting = false;
+            SetMatchmakingState(false);
+            Debug.LogError($"Fusion StartGame failed: {result.ShutdownReason}");
+            return;
+        }
+
+        if (cancelRequested)
+        {
+            runner.Shutdown();
+            isStarting = false;
+            SetMatchmakingState(false);
+            return;
+        }
+    }
+
+    private bool IsGameScene()
+    {
+        var activePath = SceneManager.GetActiveScene().path;
+        return string.Equals(activePath, gameScenePath, System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool IsLobbyScene()
+    {
+        return !IsGameScene();
+    }
+
+    private void TryLoadGameSceneIfReady()
+    {
+        if (runner == null || runner.IsRunning == false)
+        {
+            return;
+        }
+
+        if (runner.IsSharedModeMasterClient == false)
+        {
+            return;
+        }
+
+        if (runner.ActivePlayers.Count() < maxPlayers)
+        {
+            return;
+        }
+
+        var gameSceneIndex = SceneUtility.GetBuildIndexByScenePath(gameScenePath);
+        if (gameSceneIndex < 0)
+        {
+            Debug.LogError($"Game scene not in Build Settings: {gameScenePath}");
+            return;
+        }
+
+        runner.LoadScene(SceneRef.FromIndex(gameSceneIndex));
+    }
+
+    private void RefreshSpawnPoints()
+    {
+        spawnPoints.Clear();
+        var found = UnityEngine.Object.FindObjectsByType<NetworkSpawnPoint>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        if (found == null)
+        {
+            return;
+        }
+
+        spawnPoints.AddRange(found);
+    }
+
+    private Vector3 GetSpawnPosition(PlayerRef player)
+    {
+        if (spawnPoints.Count > 0)
+        {
+            var index = Mathf.Abs(player.RawEncoded) % spawnPoints.Count;
+            return spawnPoints[index].transform.position;
+        }
+
+        var angle = (Mathf.Abs(player.RawEncoded) % maxPlayers) / (float)maxPlayers * Mathf.PI * 2f;
+        return new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * fallbackSpawnRadius;
+    }
+
+    private void TrySpawnLocalPlayer(PlayerRef player)
+    {
+        if (playerPrefab == null)
+        {
+            Debug.LogError("Player prefab not set on FusionLauncher.");
+            return;
+        }
+
+        if (runner == null || runner.IsRunning == false)
+        {
+            return;
+        }
+
+        if (player != runner.LocalPlayer)
+        {
+            return;
+        }
+
+        if (spawnedPlayers.ContainsKey(player))
+        {
+            return;
+        }
+
+        var spawnPos = GetSpawnPosition(player);
+        var obj = runner.Spawn(playerPrefab, spawnPos, Quaternion.identity, player);
+        if (obj != null && obj.InputAuthority != player)
+        {
+            obj.AssignInputAuthority(player);
+        }
+        if (obj != null)
+        {
+            runner.SetPlayerObject(player, obj);
+        }
+        spawnedPlayers[player] = obj;
+    }
+
+    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
+    {
+        if (IsLobbyScene())
+        {
+            TryLoadGameSceneIfReady();
+            return;
+        }
+
+        TrySpawnLocalPlayer(player);
+    }
+
+    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
+    {
+        if (spawnedPlayers.TryGetValue(player, out var obj))
+        {
+            if (obj != null)
+            {
+                runner.Despawn(obj);
+            }
+            spawnedPlayers.Remove(player);
+        }
+    }
+
+    public void OnSceneLoadDone(NetworkRunner runner)
+    {
+        if (IsGameScene())
+        {
+            SetMatchmakingState(false);
+            RefreshSpawnPoints();
+            TrySpawnLocalPlayer(runner.LocalPlayer);
+        }
+    }
+
+    public void OnSceneLoadStart(NetworkRunner runner)
+    {
+    }
+
+    public void OnInput(NetworkRunner runner, NetworkInput input)
+    {
+        if (runner == null)
+        {
+            return;
+        }
+
+        if (runner.TryGetPlayerObject(runner.LocalPlayer, out var playerObject) == false || playerObject == null)
+        {
+            return;
+        }
+
+        var starterInputs = playerObject.GetComponent<StarterAssets.StarterAssetsInputs>();
+        if (starterInputs == null)
+        {
+            return;
+        }
+
+        PlayerInputData data = default;
+        data.Move = starterInputs.move;
+        data.Look = starterInputs.look;
+        data.Jump = starterInputs.jump;
+        data.Sprint = starterInputs.sprint;
+        input.Set(data);
+
+        // Consume one-shot inputs so they don't latch across ticks.
+        starterInputs.jump = false;
+        starterInputs.sprint = false;
+    }
+
+    public void OnConnectedToServer(NetworkRunner runner)
+    {
+    }
+
+    public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
+    {
+    }
+
+    public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token)
+    {
+    }
+
+    public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason)
+    {
+    }
+
+    public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message)
+    {
+    }
+
+    public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
+    {
+    }
+
+    public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data)
+    {
+    }
+
+    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken)
+    {
+    }
+
+    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data)
+    {
+    }
+
+    public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress)
+    {
+    }
+
+    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
+    {
+        isStarting = false;
+        cancelRequested = false;
+        SetMatchmakingState(false);
+    }
+
+    public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input)
+    {
+    }
+
+    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
+    {
+    }
+
+    public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
+    {
+    }
+
+    public void CancelMatchmaking()
+    {
+        if (isMatchmaking == false)
+        {
+            return;
+        }
+
+        cancelRequested = true;
+        if (runner != null && runner.IsRunning)
+        {
+            runner.Shutdown();
+        }
+
+        SetMatchmakingState(false);
+    }
+
+    private void SetMatchmakingState(bool value)
+    {
+        if (isMatchmaking == value)
+        {
+            return;
+        }
+
+        isMatchmaking = value;
+        MatchmakingStateChanged?.Invoke(isMatchmaking);
+    }
+}

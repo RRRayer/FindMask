@@ -1,10 +1,7 @@
 fileFormatVersion: 2
 guid: 2553cec8fdb3eb643bbe9f2ec880c472
-PrefabImporter:
-  externalObjects: {}
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
+labels:
+- FusionPrefab
 AssetOrigin:
   serializedVersion: 1
   productId: 196526
@@ -13,3 +10,8 @@ AssetOrigin:
   packageVersion: 1.1.5
   assetPath: Assets/StarterAssets/ThirdPersonController/Prefabs/PlayerCapsule.prefab
   uploadId: 691128
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

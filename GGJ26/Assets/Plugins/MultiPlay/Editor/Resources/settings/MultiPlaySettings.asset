@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: MultiPlaySettings
   m_EditorClassIdentifier: 
   maxNumberOfClones: 3
-  clonesPath: C:/Users/muamm/AppData/LocalLow/PanettoneGames/MultiPlay_Publisher
+  clonesPath: C:/Users/angel/OneDrive/문서/GitHub/GGJ26/GGJ26/Clones
   copyLibrary: 0
