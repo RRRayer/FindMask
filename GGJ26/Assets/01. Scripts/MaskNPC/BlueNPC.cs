@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 /// <summary>
-/// BaseNPC를 상속받아, '달리기'와 '대기'를 반복하는 가면 행동을 정의합니다.
+/// BaseNPC를 상속받아, '걷기'와 '뛰기'를 반복하는 가면 행동을 정의합니다.
 /// </summary>
 [RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(WanderPointProvider))]
@@ -31,79 +31,62 @@ public class BlueNPC : BaseNPC
     private void Start()
     {
         // 초기 상태를 랜덤으로 설정합니다.
-        if (Random.value < 0.5f) // 50% 확률로 Running, 50% 확률로 Idling
+        if (Random.value < 0.5f)
         {
-            currentMaskState = MaskState.Running;
-            maskStateTimer = RandomRangePicker(RunDuration);
-            agent.isStopped = false;
-            SetNewWanderDestination();
+            SetState(MaskState.Running);
         }
         else
         {
-            currentMaskState = MaskState.Walking;
-            maskStateTimer = RandomRangePicker(WalkDuration);
-            agent.isStopped = false;
-            SetNewWanderDestination();
+            SetState(MaskState.Walking);
         }
     }
 
     /// <summary>
-    /// 매 프레임 실행되며 '달리기'와 '대기' 상태에 따라 행동을 결정합니다.
+    /// 매 프레임 실행되며 '걷기'와 '뛰기' 상태에 따라 행동을 결정합니다.
     /// </summary>
     protected override void ExecuteMaskBehavior()
     {
         if (NpcController == null || agent == null) return;
 
-        // NavMeshAgent의 위치를 캐릭터의 실제 위치로 계속 업데이트합니다.
         agent.nextPosition = transform.position;
 
-        // 현재 상태의 타이머를 감소시키고, 시간이 다 되면 상태를 변경합니다.
         maskStateTimer -= Time.deltaTime;
         if (maskStateTimer <= 0)
         {
-            SwitchMaskState();
+            // 현재 상태가 달리기였으면 걷기로, 걷기였으면 달리기로 변경
+            SetState(currentMaskState == MaskState.Running ? MaskState.Walking : MaskState.Running);
+            return;
         }
 
-        // 현재 상태에 따른 행동을 실행합니다.
-        if (currentMaskState == MaskState.Running)
+        // 걷기, 뛰기 상태 모두 계속 움직이므로 목적지에 도착하면 항상 새로운 목적지를 찾습니다.
+        if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
         {
-            // 목적지에 도착하면 새로운 목적지를 설정합니다.
-            if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
-            {
-                SetNewWanderDestination();
-            }
+            SetNewWanderDestination();
+        }
 
-            // NPCController에 '달리기'를 명령합니다.
-            NpcController.SetMovement(agent.desiredVelocity.normalized, true);
-        }
-        else // Idling 상태일 경우
-        {
-            // NPCController에 '정지'를 명령합니다.
-            NpcController.SetMovement(Vector3.zero, false);
-        }
+        // 상태에 따라 뛰고 있는지(isSprinting) 여부를 결정해 NpcController에 전달합니다.
+        bool isSprinting = (currentMaskState == MaskState.Running);
+        NpcController.SetMovement(agent.desiredVelocity.normalized, isSprinting);
     }
 
     /// <summary>
-    /// '달리기'와 '대기' 상태를 전환합니다.
+    /// NPC의 상태를 설정하고, 각 상태에 맞는 초기화 작업을 수행합니다.
     /// </summary>
-    private void SwitchMaskState()
+    private void SetState(MaskState newState)
     {
-        if (currentMaskState == MaskState.Running)
+        currentMaskState = newState;
+        agent.isStopped = false; // BlueNPC는 멈추지 않고 계속 움직입니다.
+
+        if (newState == MaskState.Running)
         {
-            // '대기' 상태로 변경
-            currentMaskState = MaskState.Walking;
-            maskStateTimer = RandomRangePicker(WalkDuration);
-            agent.isStopped = true;
-            agent.ResetPath();
-        }
-        else // Walking 상태였다면
-        {
-            // '달리기' 상태로 변경
-            currentMaskState = MaskState.Running;
             maskStateTimer = RandomRangePicker(RunDuration);
-            agent.isStopped = false;
-            SetNewWanderDestination();
         }
+        else // Walking
+        {
+            maskStateTimer = RandomRangePicker(WalkDuration);
+        }
+        // 새로운 상태가 되면 항상 새로운 목적지를 설정합니다.
+        SetNewWanderDestination();
     }
 
     /// <summary>
@@ -117,4 +100,3 @@ public class BlueNPC : BaseNPC
         }
     }
 }
-

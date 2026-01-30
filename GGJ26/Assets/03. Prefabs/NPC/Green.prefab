@@ -1871,7 +1871,6 @@ GameObject:
   - component: {fileID: 6588036584059607187}
   - component: {fileID: 296299644074786106}
   - component: {fileID: 7546152776567864956}
-  - component: {fileID: 8470704676812947872}
   - component: {fileID: 4051451431675508921}
   m_Layer: 8
   m_Name: Green
@@ -2036,25 +2035,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   wanderRadius: 20
---- !u!114 &8470704676812947872
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6270356186976918443}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5cd25af28eb93ee4496b3894c443ddc3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  stoppingDistance: 1.5
-  RunDuration:
-  - 2
-  - 5
-  IdleDuration:
-  - 2
-  - 5
 --- !u!114 &4051451431675508921
 MonoBehaviour:
   m_ObjectHideFlags: 0
