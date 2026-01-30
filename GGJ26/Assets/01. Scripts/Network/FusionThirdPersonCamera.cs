@@ -20,6 +20,7 @@ public class FusionThirdPersonCamera : MonoBehaviour
     private PlayerInput playerInput;
     private float cinemachineTargetYaw;
     private float cinemachineTargetPitch;
+    private bool isBound;
 
     private const float Threshold = 0.01f;
 
@@ -43,14 +44,6 @@ public class FusionThirdPersonCamera : MonoBehaviour
             {
                 cameraTarget = targetTransform;
             }
-            else
-            {
-                var taggedTarget = GameObject.FindGameObjectWithTag("CinemachineTarget");
-                if (taggedTarget != null)
-                {
-                    cameraTarget = taggedTarget.transform;
-                }
-            }
         }
 
         if (cameraTarget != null)
@@ -66,6 +59,11 @@ public class FusionThirdPersonCamera : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (isBound == false)
+        {
+            BindCameraTargets();
+        }
+
         if (cameraTarget == null || input == null)
         {
             return;
@@ -86,6 +84,12 @@ public class FusionThirdPersonCamera : MonoBehaviour
 
     private void BindCameraTargets()
     {
+        var networkObject = GetComponent<Fusion.NetworkObject>();
+        if (networkObject != null && networkObject.HasInputAuthority == false)
+        {
+            return;
+        }
+
         if (cameraTarget == null)
         {
             return;
@@ -121,6 +125,7 @@ public class FusionThirdPersonCamera : MonoBehaviour
 
         followCamera.Follow = cameraTarget;
         followCamera.LookAt = cameraTarget;
+        isBound = true;
     }
 
     private static float ClampAngle(float angle, float min, float max)

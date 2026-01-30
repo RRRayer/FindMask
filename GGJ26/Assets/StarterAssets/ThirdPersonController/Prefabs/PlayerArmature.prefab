@@ -1038,6 +1038,11 @@ GameObject:
   - component: {fileID: 5885216827943657505}
   - component: {fileID: 135756642000475821}
   - component: {fileID: 4416926081852918493}
+  - component: {fileID: 3978347823390045238}
+  - component: {fileID: 2498353686968945355}
+  - component: {fileID: 5715435315174884413}
+  - component: {fileID: 8096708549146426077}
+  - component: {fileID: 7520514698857385123}
   m_Layer: 8
   m_Name: PlayerArmature
   m_TagString: Player
@@ -1288,6 +1293,100 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &3978347823390045238
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4416926081852918481}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 1171547427
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 2498353686968945355}
+  - {fileID: 5715435315174884413}
+  - {fileID: 8096708549146426077}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &2498353686968945355
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4416926081852918481}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d64041cd4066498c9a512618efadc210, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  requestStateAuthorityOnSpawn: 1
+  debugAuthority: 0
+  localOnlyBehaviours: []
+  localOnlyObjects: []
+--- !u!114 &5715435315174884413
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4416926081852918481}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a1bdf2e77b34abf9be2df2c2dfe2b30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveSpeed: 2
+  sprintSpeed: 5.335
+  rotationSmoothTime: 0.12
+  gravity: -15
+  jumpHeight: 1.2
+  jumpBufferTime: 0.1
+  coyoteTime: 0.1
+  debugInput: 0
+  updateAnimator: 1
+--- !u!114 &8096708549146426077
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4416926081852918481}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  SyncScale: 0
+  SyncParent: 0
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 0
+--- !u!114 &7520514698857385123
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4416926081852918481}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b0b1f6f7c9d4a79a6e83a7f3a2a4c1e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cameraObjectName: PlayerFollowCamera
+  bindAllVirtualCameras: 0
+  cameraTarget: {fileID: 0}
+  topClamp: 70
+  bottomClamp: -30
+  cameraAngleOverride: 0
+  lockCameraPosition: 0
 --- !u!1 &4523139366846529165
 GameObject:
   m_ObjectHideFlags: 0

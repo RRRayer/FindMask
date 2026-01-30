@@ -370,6 +370,8 @@ GameObject:
   - component: {fileID: 2165630663973288436}
   - component: {fileID: 7191408577459914492}
   - component: {fileID: 1939021157780750258}
+  - component: {fileID: 7212592482297200950}
+  - component: {fileID: 3919135070344895946}
   m_Layer: 8
   m_Name: Blue
   m_TagString: Player
@@ -552,6 +554,38 @@ MonoBehaviour:
   RunDuration:
   - 2
   - 3
+--- !u!114 &7212592482297200950
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2309816035768612337}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 2180075876
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours: []
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &3919135070344895946
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2309816035768612337}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f2a39c840d64c5bb6c4b4f7bdbe7301, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speedParam: Speed
+  motionSpeedParam: MotionSpeed
 --- !u!1 &2452816787128034741
 GameObject:
   m_ObjectHideFlags: 0
