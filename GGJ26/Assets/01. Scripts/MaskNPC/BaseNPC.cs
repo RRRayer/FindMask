@@ -71,7 +71,22 @@ public abstract class BaseNPC : MonoBehaviour
 
     public float RandomRangePicker(float[] range)
     {
-        int randomIndex = Random.Range(0, range.Length);
-        return range[randomIndex];
+        if (range.Length != 2)
+        {
+            Debug.LogError("범위 배열의 길이는 2여야 합니다.");
+            return 0f;
+        }
+        return Random.Range(range[0], range[1]);
+    }
+
+    public int RandomRangePicker(int[] range)
+    {
+        if (range.Length != 2)
+        {
+            Debug.LogError("범위 배열의 길이는 2여야 합니다.");
+            return 0;
+        }
+        // For integers, Random.Range's upper bound is exclusive, so add 1 to make it inclusive.
+        return Random.Range(range[0], range[1] + 1);
     }
 }

@@ -115,9 +115,16 @@ public class NPCController : MonoBehaviour
     /// <summary>
     /// Makes the NPC attempt to jump. Called by an AI controller.
     /// </summary>
-    public void TriggerJump()
+    /// <returns>True if the jump was successfully triggered, false otherwise.</returns>
+    public bool TriggerJump()
     {
-        _shouldJump = true;
+        if (Grounded && _jumpTimeoutDelta <= 0.0f)
+        {
+            _shouldJump = true;
+            return true;
+        }
+
+        return false;
     }
 
     #endregion
