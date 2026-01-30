@@ -90,13 +90,11 @@ public class DiscoBall : MonoBehaviour
         if (_isDiscoActive) return;
         _isDiscoActive = true;
 
-        // 이전에 실행중인 모든 코루틴을 정리
+        // 이전에 실행중인 모든 코루틴을 확실히 정리
         StopAllCoroutines();
-        _runningCoroutines.Clear();
-
-        // 마스터 코루틴 하나만 시작하고 관리
-        var masterCoroutine = StartCoroutine(DiscoLoop());
-        _runningCoroutines.Add(masterCoroutine);
+        
+        // 새로운 마스터 코루틴을 시작
+        StartCoroutine(DiscoLoop());
     }
 
     /// <summary>
@@ -109,48 +107,79 @@ public class DiscoBall : MonoBehaviour
 
         // 모든 코루틴 중지 (가장 확실한 방법)
         StopAllCoroutines();
-        _runningCoroutines.Clear();
 
         // 모든 조명 끄기
         foreach (var group in _logicalLightGroups) TurnOffLightsInGroup(group);
         if (centralPointLight != null) centralPointLight.enabled = false;
     }
-
+    
     IEnumerator DiscoLoop()
     {
-        // --- 초기화 ---
-        int currentGroupIndex = 0;
+        // --- 상태 및 타이머 변수 초기화 ---
         float groupSwitchTimer = 0f;
-
+        float blinkTimer = 0f;
+        float currentBlinkDuration = 0f;
+        bool lightsAreOn = false;
+        int currentGroupIndex = 0;
+        
         var fromRotations = new Dictionary<Light, Quaternion>();
         var toRotations = new Dictionary<Light, Quaternion>();
         var lerpProgress = new Dictionary<Light, float>();
 
-        // 첫 번째 그룹 준비
-        List<Light> currentGroup = _logicalLightGroups.Count > 0 ? _logicalLightGroups[0] : new List<Light>();
+        List<Light> currentGroup = _logicalLightGroups.Count > 0 ? _logicalLightGroups[currentGroupIndex] : new List<Light>();
         InitializeRotationsForGroup(currentGroup, fromRotations, toRotations, lerpProgress);
 
-        // --- 메인 루프 ---
+        // --- 단일 마스터 루프 ---
         while (_isDiscoActive)
         {
             float deltaTime = Time.deltaTime;
             groupSwitchTimer += deltaTime;
-            
-            // 그룹 전환 로직
-            if (groupSwitchTimer >= groupActiveDuration && _logicalLightGroups.Count > 0)
+            blinkTimer += deltaTime;
+
+            // 1. 그룹 전환 로직
+            if (groupSwitchTimer >= groupActiveDuration && _logicalLightGroups.Count > 1)
             {
-                groupSwitchTimer = 0;
-                TurnOffLightsInGroup(currentGroup); // 이전 그룹 끄기
+                groupSwitchTimer = 0f;
+                TurnOnLightsInGroup(currentGroup, false); // 이전 그룹 끄기
 
                 currentGroupIndex = (currentGroupIndex + 1) % _logicalLightGroups.Count;
                 currentGroup = _logicalLightGroups[currentGroupIndex];
                 
                 InitializeRotationsForGroup(currentGroup, fromRotations, toRotations, lerpProgress);
+                lightsAreOn = false; // 새 그룹의 점멸 상태 초기화
+                blinkTimer = 0f;
             }
 
-            // 활성 그룹에 대한 점멸 및 회전 처리
-            // (내부에서 자체적으로 타이머를 돌며 점멸)
-            yield return StartCoroutine(ProcessActiveGroupAndCentralLight(currentGroup, fromRotations, toRotations, lerpProgress));
+            // 2. 점멸 로직 (스포트라이트와 중앙 조명 동시 제어)
+            if (blinkTimer >= currentBlinkDuration)
+            {
+                blinkTimer = 0f;
+                lightsAreOn = !lightsAreOn;
+
+                // 스포트라이트 점멸 및 색상 변경
+                TurnOnLightsInGroup(currentGroup, lightsAreOn);
+                // 중앙 조명 점멸 및 색상 변경
+                if (centralPointLight != null) centralPointLight.enabled = lightsAreOn;
+
+                if (lightsAreOn)
+                {
+                    currentBlinkDuration = Random.Range(minOnTime, maxOnTime);
+                    SetRandomColorsForGroup(currentGroup);
+                    if (centralPointLight != null && discoColors.Length > 0)
+                    {
+                        centralPointLight.color = discoColors[Random.Range(0, discoColors.Length)];
+                    }
+                }
+                else
+                {
+                    currentBlinkDuration = Random.Range(minBlinkInterval, maxBlinkInterval);
+                }
+            }
+
+            // 3. 회전 로직 (점멸 상태와 무관하게 항상 업데이트)
+            UpdateLightRotations(currentGroup, fromRotations, toRotations, lerpProgress);
+            
+            yield return null; // 다음 프레임까지 대기
         }
     }
 
@@ -165,45 +194,6 @@ public class DiscoBall : MonoBehaviour
             from[light] = light.transform.localRotation;
             to[light] = GenerateRandomRotation();
             progress[light] = 0f;
-        }
-    }
-
-    IEnumerator ProcessActiveGroupAndCentralLight(List<Light> groupLights, Dictionary<Light, Quaternion> fromRotations, Dictionary<Light, Quaternion> toRotations, Dictionary<Light, float> lerpProgress)
-    {
-        // 스포트라이트 켜기
-        SetRandomColorsForGroup(groupLights);
-        TurnOnLightsInGroup(groupLights, true);
-
-        // 중앙 라이트 켜기
-        if (centralPointLight != null)
-        {
-            centralPointLight.enabled = true;
-            if (discoColors.Length > 0)
-                centralPointLight.color = discoColors[Random.Range(0, discoColors.Length)];
-        }
-        
-        float onTimer = 0f;
-        float onDuration = Random.Range(minOnTime, maxOnTime);
-        while(onTimer < onDuration)
-        {
-            if (!_isDiscoActive) yield break; // 중간에 중지 신호가 오면 즉시 종료
-            UpdateLightRotations(groupLights, fromRotations, toRotations, lerpProgress);
-            onTimer += Time.deltaTime;
-            yield return null;
-        }
-
-        // 모든 라이트 끄기
-        TurnOnLightsInGroup(groupLights, false);
-        if (centralPointLight != null) centralPointLight.enabled = false;
-        
-        float offTimer = 0f;
-        float offDuration = Random.Range(minBlinkInterval, maxBlinkInterval);
-        while (offTimer < offDuration)
-        {
-            if (!_isDiscoActive) yield break; // 중간에 중지 신호가 오면 즉시 종료
-            UpdateLightRotations(groupLights, fromRotations, toRotations, lerpProgress);
-            offTimer += Time.deltaTime;
-            yield return null;
         }
     }
     
@@ -257,28 +247,6 @@ public class DiscoBall : MonoBehaviour
         foreach (Light light in groupLights)
         {
             if (light != null) light.enabled = state;
-        }
-    }
-
-    IEnumerator CentralPointLightBlinkProcess()
-    {
-        bool hasColors = discoColors != null && discoColors.Length > 0;
-        
-        while (true)
-        {
-            // 점멸할 때마다 새로운 랜덤 색상 선택
-            if (hasColors)
-            {
-                centralPointLight.color = discoColors[Random.Range(0, discoColors.Length)];
-            }
-            
-            // 라이트 켜기
-            centralPointLight.enabled = true;
-            yield return new WaitForSeconds(Random.Range(minOnTime, maxOnTime));
-
-            // 라이트 끄기
-            centralPointLight.enabled = false;
-            yield return new WaitForSeconds(Random.Range(minBlinkInterval, maxBlinkInterval));
         }
     }
 }
