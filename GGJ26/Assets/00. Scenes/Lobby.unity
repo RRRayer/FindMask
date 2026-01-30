@@ -1106,7 +1106,7 @@ MonoBehaviour:
   autoStartOnAwake: 0
   playerPrefab: {fileID: 3978347823390045238, guid: 64dce48905ffd9b4293e595fa6941544, type: 3}
   seekerPrefab: {fileID: 3978347823390045238, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
-  normalPrefab: {fileID: 3978347823390045238, guid: 5653f12b043b4db6b434be0d655094e8, type: 3}
+  normalPrefab: {fileID: 7063597009082458412, guid: 8ea9807e04484b249a2e00d3e60948a5, type: 3}
   fallbackSpawnRadius: 4
   playerStateManager: {fileID: 5780521679406519432, guid: 302fb3a2e00a8fc4d910545cbeb7ddb8, type: 3}
 --- !u!114 &2000000003

@@ -1046,6 +1046,8 @@ GameObject:
   - component: {fileID: 5715435315174884413}
   - component: {fileID: 8096708549146426077}
   - component: {fileID: 7520514698857385123}
+  - component: {fileID: 9100000000000000011}
+  - component: {fileID: 9100000000000000010}
   m_Layer: 7
   m_Name: PlayerArmature_Seeker
   m_TagString: Player
@@ -1111,6 +1113,8 @@ MonoBehaviour:
   crosshairSize: 24
   crosshairThickness: 2
   crosshairColor: {r: 1, g: 1, b: 1, a: 1}
+  hitEffectPrefab: {fileID: 2049132443587695705, guid: fa6608f60ce2e9f49a630de263c274c1, type: 3}
+  hitEffectLifetime: 1.5
 --- !u!114 &9100000000000000009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1372,6 +1376,7 @@ MonoBehaviour:
   - {fileID: 2498353686968945355}
   - {fileID: 5715435315174884413}
   - {fileID: 8096708549146426077}
+  - {fileID: 9100000000000000011}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &2498353686968945355
 MonoBehaviour:
@@ -2933,3 +2938,45 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2599833186509229834, guid: 427a0306271edd84fbc7d3ebc210453a, type: 3}
   m_PrefabInstance: {fileID: 7593580857930403632}
   m_PrefabAsset: {fileID: 0}
+
+--- !u!114 &9100000000000000011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4416926081852918481}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6aa5d0c32c6f4ad4b032c2f897cd5c9e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _IsSeeker: 0
+  _RoleAssigned: 0
+  _MaskColorIndex: 0
+  _MaskAssigned: 0
+--- !u!114 &9100000000000000010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4416926081852918481}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21c2b1a8e8c8443aa04a62b0e7c2d5b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  role: {fileID: 9100000000000000011}
+  stunGun: {fileID: 9100000000000000008}
+  seekerVisualRoot: {fileID: 0}
+  normalVisualRoot: {fileID: 0}
+  maskObjects:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  maskRenderer: {fileID: 0}
+  maskMaterials:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}

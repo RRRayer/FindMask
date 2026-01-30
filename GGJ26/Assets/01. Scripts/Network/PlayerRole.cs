@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
 
@@ -7,6 +8,7 @@ public class PlayerRole : NetworkBehaviour
     [Networked] private NetworkBool RoleAssigned { get; set; }
     [Networked] private int MaskColorIndex { get; set; }
     [Networked] private NetworkBool MaskAssigned { get; set; }
+    [Networked] private int MaskSeed { get; set; }
 
     private PlayerStateManager playerStateManager;
     private bool lastIsSeeker;
@@ -78,15 +80,25 @@ public class PlayerRole : NetworkBehaviour
             }
         }
 
-        if (IsSeeker == false)
-        {
-            MaskColorIndex = Random.Range(0, 3);
-        }
-        else
+        if (IsSeeker)
         {
             MaskColorIndex = -1;
+            if (MaskSeed == 0)
+            {
+                MaskSeed = Random.Range(1, int.MaxValue);
+            }
+
+            MaskAssigned = true;
+            return;
         }
 
+        int seed = GetMaskSeed();
+        if (seed == 0)
+        {
+            return;
+        }
+
+        MaskColorIndex = GetDeterministicMaskIndex(Object.InputAuthority, seed);
         MaskAssigned = true;
     }
 
@@ -115,6 +127,71 @@ public class PlayerRole : NetworkBehaviour
         }
 
         return count;
+    }
+
+    private int GetDeterministicMaskIndex(PlayerRef player, int seed)
+    {
+        var players = new List<PlayerRef>();
+        foreach (var item in Runner.ActivePlayers)
+        {
+            players.Add(item);
+        }
+
+        players.Sort((a, b) => a.RawEncoded.CompareTo(b.RawEncoded));
+
+        if (players.Count == 0)
+        {
+            return 0;
+        }
+
+        PlayerRef seeker = players[0];
+        players.Remove(seeker);
+
+        Shuffle(players, seed);
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            if (players[i] == player)
+            {
+                return i % 3;
+            }
+        }
+
+        return 0;
+    }
+
+    private int GetMaskSeed()
+    {
+        if (Runner == null)
+        {
+            return 0;
+        }
+
+        PlayerRef seeker = GetDeterministicSeeker();
+        if (Runner.TryGetPlayerObject(seeker, out var seekerObject) == false || seekerObject == null)
+        {
+            return 0;
+        }
+
+        var role = seekerObject.GetComponent<PlayerRole>();
+        if (role == null)
+        {
+            return 0;
+        }
+
+        return role.MaskSeed;
+    }
+
+    private void Shuffle(List<PlayerRef> list, int seed)
+    {
+        var rng = new System.Random(seed);
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = rng.Next(i + 1);
+            var temp = list[i];
+            list[i] = list[j];
+            list[j] = temp;
+        }
     }
 
     public bool HasRoleAssigned()

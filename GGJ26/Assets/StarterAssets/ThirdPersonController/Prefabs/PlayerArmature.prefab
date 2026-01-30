@@ -1047,6 +1047,7 @@ GameObject:
   - component: {fileID: 5715435315174884413}
   - component: {fileID: 8096708549146426077}
   - component: {fileID: 7520514698857385123}
+  - component: {fileID: 9100000000000000011}
   m_Layer: 6
   m_Name: PlayerArmature
   m_TagString: Player
@@ -1368,6 +1369,7 @@ MonoBehaviour:
   - {fileID: 2498353686968945355}
   - {fileID: 5715435315174884413}
   - {fileID: 8096708549146426077}
+  - {fileID: 9100000000000000011}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &2498353686968945355
 MonoBehaviour:
@@ -2936,7 +2938,8 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: 6999500488051347510, guid: 7219dad93d7fd454faa54ac0505ee7c5, type: 3}
   m_PrefabInstance: {fileID: 1846695917867450849}
-  m_PrefabAsset: {fileID: 0}--- !u!114 &9100000000000000010
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &9100000000000000010
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2962,3 +2965,20 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
 
+
+--- !u!114 &9100000000000000011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4416926081852918481}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6aa5d0c32c6f4ad4b032c2f897cd5c9e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _IsSeeker: 0
+  _RoleAssigned: 0
+  _MaskColorIndex: 0
+  _MaskAssigned: 0
