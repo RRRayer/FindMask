@@ -12,10 +12,17 @@ public class FusionThirdPersonMotor : NetworkBehaviour
     [SerializeField] private float jumpHeight = 1.2f;
     [SerializeField] private float jumpBufferTime = 0.1f;
     [SerializeField] private float coyoteTime = 0.1f;
+    [Header("Grounded Check")]
+    [SerializeField] private float groundedOffset = -0.14f;
+    [SerializeField] private float groundedRadius = 0.28f;
+    [SerializeField] private LayerMask groundLayers = 1;
     [SerializeField] private bool debugInput = false;
     [SerializeField] private bool updateAnimator = true;
 
     [Networked] private float VerticalVelocity { get; set; }
+    [Networked] private float NetHorizontalSpeed { get; set; }
+    [Networked] private float NetInputMagnitude { get; set; }
+    [Networked] private NetworkBool NetGrounded { get; set; }
 
     private CharacterController controller;
     private Animator animator;
@@ -28,11 +35,10 @@ public class FusionThirdPersonMotor : NetworkBehaviour
     private float rotationVelocity;
     private float fallTimeout = 0.15f;
     private float jumpTimeout = 0.3f;
-    private float fallTimeoutDelta;
-    private float jumpTimeoutDelta;
     private float lastJumpPressedTime = -10f;
     private float lastGroundedTime = -10f;
     private Camera mainCamera;
+    private bool isGrounded;
 
     private void Awake()
     {
@@ -55,8 +61,6 @@ public class FusionThirdPersonMotor : NetworkBehaviour
             animIDFreeFall = Animator.StringToHash("FreeFall");
             animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
         }
-        fallTimeoutDelta = fallTimeout;
-        jumpTimeoutDelta = 0f;
     }
 
     public override void FixedUpdateNetwork()
@@ -110,7 +114,8 @@ public class FusionThirdPersonMotor : NetworkBehaviour
             lastJumpPressedTime = Runner.SimulationTime;
         }
 
-        if (controller.isGrounded)
+        isGrounded = CheckGrounded();
+        if (isGrounded)
         {
             lastGroundedTime = Runner.SimulationTime;
         }
@@ -120,12 +125,14 @@ public class FusionThirdPersonMotor : NetworkBehaviour
         bool doJump = wantsJump && canCoyote;
 
         ApplyGravity(horizontal, doJump);
-        UpdateAnimatorState(horizontal, inputMagnitude, input.Jump);
+        NetGrounded = isGrounded;
+        NetHorizontalSpeed = new Vector3(horizontal.x, 0f, horizontal.z).magnitude;
+        NetInputMagnitude = inputMagnitude;
     }
 
     private void ApplyGravity(Vector3 horizontal, bool jump = false)
     {
-        if (controller.isGrounded)
+        if (isGrounded)
         {
             if (jump)
             {
@@ -143,50 +150,33 @@ public class FusionThirdPersonMotor : NetworkBehaviour
         controller.Move(motion);
     }
 
-    private void UpdateAnimatorState(Vector3 horizontal, float inputMagnitude, bool jumpPressed)
+    private bool CheckGrounded()
+    {
+        Vector3 spherePosition = new Vector3(
+            transform.position.x,
+            transform.position.y + groundedOffset,
+            transform.position.z);
+
+        return Physics.CheckSphere(spherePosition, groundedRadius, groundLayers, QueryTriggerInteraction.Ignore);
+    }
+
+    public override void Render()
     {
         if (hasAnimator == false || updateAnimator == false)
         {
             return;
         }
 
-        bool grounded = controller.isGrounded;
+        bool grounded = NetGrounded;
         animator.SetBool(animIDGrounded, grounded);
 
-        if (grounded)
-        {
-            fallTimeoutDelta = fallTimeout;
-            animator.SetBool(animIDFreeFall, false);
+        bool isJumping = grounded == false && VerticalVelocity > 0.1f;
+        bool isFreeFall = grounded == false && VerticalVelocity < -0.1f;
 
-            if (jumpPressed && jumpTimeoutDelta <= 0f)
-            {
-                animator.SetBool(animIDJump, true);
-            }
-            else
-            {
-                animator.SetBool(animIDJump, false);
-            }
+        animator.SetBool(animIDJump, isJumping);
+        animator.SetBool(animIDFreeFall, isFreeFall);
 
-            if (jumpTimeoutDelta >= 0f)
-            {
-                jumpTimeoutDelta -= Runner.DeltaTime;
-            }
-        }
-        else
-        {
-            jumpTimeoutDelta = jumpTimeout;
-            if (fallTimeoutDelta >= 0f)
-            {
-                fallTimeoutDelta -= Runner.DeltaTime;
-            }
-            else
-            {
-                animator.SetBool(animIDFreeFall, true);
-            }
-        }
-
-        float speed = new Vector3(horizontal.x, 0f, horizontal.z).magnitude;
-        animator.SetFloat(animIDSpeed, speed);
-        animator.SetFloat(animIDMotionSpeed, inputMagnitude);
+        animator.SetFloat(animIDSpeed, NetHorizontalSpeed);
+        animator.SetFloat(animIDMotionSpeed, NetInputMagnitude);
     }
 }
