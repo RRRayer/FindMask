@@ -98,7 +98,6 @@ public abstract class BaseNPC : MonoBehaviour
         if (isStart)
         {
             currentState = ActionState.GroupDance;
-
             NpcController.StartDance(danceIndex);    
         }
         else
