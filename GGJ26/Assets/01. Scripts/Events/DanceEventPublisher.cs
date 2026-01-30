@@ -12,47 +12,59 @@ public class DanceEventPublisher : MonoBehaviour
     [SerializeField] private float groupDanceInterval = 30f;
     [SerializeField] private float groupDanceDuration = 10f;
 
-    [Header("Events")]
-    [SerializeField] private BoolEventChannelSO maskDanceActiveEvent;
-    [SerializeField] private IntEventChannelSO maskDanceColorEvent;
-    [SerializeField] private IntEventChannelSO maskDanceIndexEvent;
+    [Header("Mask Dance Events (per color)")]
+    [SerializeField] private BoolEventChannelSO[] maskDanceActiveEvents = new BoolEventChannelSO[3];
+    [SerializeField] private IntEventChannelSO[] maskDanceIndexEvents = new IntEventChannelSO[3];
+
+    [Header("Group Dance Events")]
     [SerializeField] private BoolEventChannelSO groupDanceActiveEvent;
 
     private bool isGroupDanceActive;
+    private readonly bool[] maskDanceActive = new bool[3];
 
     private void Start()
     {
         Debug.Log(
-            $"[DanceEvent] Publisher start. MaskActive={GetEventName(maskDanceActiveEvent)} MaskColor={GetEventName(maskDanceColorEvent)} MaskIndex={GetEventName(maskDanceIndexEvent)} GroupActive={GetEventName(groupDanceActiveEvent)}",
+            $"[DanceEvent] Publisher start. MaskActive={GetEventNames(maskDanceActiveEvents)} MaskIndex={GetEventNames(maskDanceIndexEvents)} GroupActive={GetEventName(groupDanceActiveEvent)}",
             this);
-        StartCoroutine(MaskDanceLoop());
+
+        for (int i = 0; i < 3; i++)
+        {
+            StartCoroutine(MaskDanceLoop((MaskColor)i));
+        }
+
         StartCoroutine(GroupDanceLoop());
     }
 
-    private IEnumerator MaskDanceLoop()
+    private IEnumerator MaskDanceLoop(MaskColor color)
     {
+        int colorIndex = (int)color;
         while (true)
         {
             float wait = Random.Range(maskDanceMinInterval, maskDanceMaxInterval);
             yield return new WaitForSeconds(wait);
 
-            if (isGroupDanceActive)
+            while (isGroupDanceActive)
             {
-                continue;
+                yield return null;
             }
 
-            int color = Random.Range(0, 3);
             int danceIndex = Random.Range(1, 5);
+            maskDanceIndexEvents[colorIndex]?.RaiseEvent(danceIndex);
+            maskDanceActiveEvents[colorIndex]?.RaiseEvent(true);
+            maskDanceActive[colorIndex] = true;
+            Debug.Log($"[DanceEvent] MaskDance start color={color} dance={danceIndex} duration={maskDanceDuration:0.0}s", this);
 
-            Debug.Log($"[DanceEvent] MaskDance start color={(MaskColor)color} dance={danceIndex} duration={maskDanceDuration:0.0}s", this);
-            maskDanceColorEvent?.RaiseEvent(color);
-            maskDanceIndexEvent?.RaiseEvent(danceIndex);
-            maskDanceActiveEvent?.RaiseEvent(true);
+            float elapsed = 0f;
+            while (elapsed < maskDanceDuration && isGroupDanceActive == false)
+            {
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
 
-            yield return new WaitForSeconds(maskDanceDuration);
-
-            Debug.Log("[DanceEvent] MaskDance end", this);
-            maskDanceActiveEvent?.RaiseEvent(false);
+            maskDanceActiveEvents[colorIndex]?.RaiseEvent(false);
+            maskDanceActive[colorIndex] = false;
+            Debug.Log($"[DanceEvent] MaskDance end color={color}", this);
         }
     }
 
@@ -63,8 +75,9 @@ public class DanceEventPublisher : MonoBehaviour
             yield return new WaitForSeconds(groupDanceInterval);
 
             isGroupDanceActive = true;
-            Debug.Log($"[DanceEvent] GroupDance start duration={groupDanceDuration:0.0}s", this);
+            StopAllMaskDances();
             groupDanceActiveEvent?.RaiseEvent(true);
+            Debug.Log($"[DanceEvent] GroupDance start duration={groupDanceDuration:0.0}s", this);
 
             yield return new WaitForSeconds(groupDanceDuration);
 
@@ -74,8 +87,36 @@ public class DanceEventPublisher : MonoBehaviour
         }
     }
 
+    private void StopAllMaskDances()
+    {
+        for (int i = 0; i < maskDanceActive.Length; i++)
+        {
+            if (maskDanceActive[i])
+            {
+                maskDanceActiveEvents[i]?.RaiseEvent(false);
+                maskDanceActive[i] = false;
+            }
+        }
+    }
+
     private static string GetEventName(ScriptableObject channel)
     {
         return channel == null ? "None" : $"{channel.name}#{channel.GetInstanceID()}";
+    }
+
+    private static string GetEventNames(ScriptableObject[] channels)
+    {
+        if (channels == null || channels.Length == 0)
+        {
+            return "None";
+        }
+
+        string[] names = new string[channels.Length];
+        for (int i = 0; i < channels.Length; i++)
+        {
+            names[i] = GetEventName(channels[i]);
+        }
+
+        return string.Join(", ", names);
     }
 }
