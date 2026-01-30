@@ -13,14 +13,15 @@ public abstract class BaseNPC : MonoBehaviour
     protected NavMeshAgent agent;
     protected WanderPointProvider wanderProvider;
 
-    [Header("행동 시간 간격")]
-    [Tooltip("기본 행동")]
-    public float[] WalkDurtaions = new float[] { 2f, 5f };
-    public float[] IdleDurations = new float[] { 2f, 5f };
-    [Tooltip("행동 1")]
-    public float[] Behaviour1Duration = new float[] { 2f, 4f };
-    [Tooltip("행동 2")]
-    public float[] Behaviour2Duration = new float[] { 2f, 4f };
+
+    public enum ActionState
+    {
+        MaskBehavior,
+        Dance
+    }
+
+    private ActionState currentState = ActionState.MaskBehavior;
+
 
     /// <summary>
     /// Awake는 컴포넌트 참조를 초기화하는 데 사용됩니다.
@@ -39,12 +40,15 @@ public abstract class BaseNPC : MonoBehaviour
         agent.updateRotation = false;
     }
 
-    /// <summary>
-    /// 모든 npc의 기본 행동입니다.
-    /// </summary>
-    protected void BaseBehavior()
-    {
 
+    private void Start()
+    {
+        GameStart();
+    }
+
+    private void GameStart()
+    {
+        currentState = ActionState.MaskBehavior;
     }
 
     /// <summary>
@@ -53,12 +57,21 @@ public abstract class BaseNPC : MonoBehaviour
     /// </summary>
     private void Update()
     {
-        ExecuteBehavior();
+        if (currentState == ActionState.MaskBehavior)
+        {
+            ExecuteMaskBehavior();
+        }
     }
 
     /// <summary>
     /// 자식 NPC 클래스가 반드시 구현해야 하는 추상 메서드입니다.
     /// 각 NPC의 고유한 행동 로직이 이 메서드 안에 작성됩니다.
     /// </summary>
-    protected abstract void ExecuteBehavior();
+    protected abstract void ExecuteMaskBehavior();
+
+    public float RandomRangePicker(float[] range)
+    {
+        int randomIndex = Random.Range(0, range.Length);
+        return range[randomIndex];
+    }
 }

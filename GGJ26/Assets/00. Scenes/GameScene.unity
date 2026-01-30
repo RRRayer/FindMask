@@ -561,6 +561,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   stoppingDistance: 1.5
+  RunDuration:
+  - 2
+  - 5
+  IdleDuration:
+  - 2
+  - 5
 --- !u!114 &475886474
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1111,6 +1117,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   stoppingDistance: 1.5
+  RunDuration:
+  - 2
+  - 5
+  IdleDuration:
+  - 2
+  - 5
 --- !u!114 &615170624
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1305,6 +1317,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   stoppingDistance: 1.5
+  RunDuration:
+  - 2
+  - 5
+  IdleDuration:
+  - 2
+  - 5
 --- !u!114 &683920911
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2310,6 +2328,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   stoppingDistance: 1.5
+  RunDuration:
+  - 2
+  - 5
+  IdleDuration:
+  - 2
+  - 5
 --- !u!114 &1230828877
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2795,6 +2819,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   stoppingDistance: 1.5
+  RunDuration:
+  - 2
+  - 5
+  IdleDuration:
+  - 2
+  - 5
 --- !u!114 &1260944051
 MonoBehaviour:
   m_ObjectHideFlags: 0
