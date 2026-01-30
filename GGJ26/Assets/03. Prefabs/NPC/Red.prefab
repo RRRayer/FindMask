@@ -1057,9 +1057,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   OnGroupDanceStart: {fileID: 11400000, guid: 2f392a79a9c07cb4d84bbadf00f5947a, type: 2}
-  OnMaskDanceStart: {fileID: 11400000, guid: 34262afc5d6fffa449000d8b22b666df, type: 2}
-  GroupNumberChannel: {fileID: 0}
-  DanceIndexChannel: {fileID: 0}
   DanceIndexChannel: {fileID: 11400000, guid: 455fcfc713ebbea40a2355c6b9a7581e, type: 2}
   stoppingDistance: 1.5
   RunDuration:

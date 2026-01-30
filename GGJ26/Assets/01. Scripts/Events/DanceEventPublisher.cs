@@ -17,6 +17,8 @@ public class DanceEventPublisher : MonoBehaviour
 
     [Header("Group Dance Events")]
     [SerializeField] private BoolEventChannelSO groupDanceActiveEvent;
+    [SerializeField] private VoidEventChannelSO startDiscoEvent;
+    [SerializeField] private VoidEventChannelSO stopDiscoEvent;
 
     private bool isGroupDanceActive;
     private readonly bool[] maskDanceActive = new bool[3];
@@ -71,11 +73,13 @@ public class DanceEventPublisher : MonoBehaviour
             isGroupDanceActive = true;
             StopAllMaskDances();
             groupDanceActiveEvent?.RaiseEvent(true);
+            startDiscoEvent?.RaiseEvent();
             Debug.Log($"[DanceEvent] GroupDance start duration={groupDanceDuration:0.0}s", this);
 
             yield return new WaitForSeconds(groupDanceDuration);
 
             groupDanceActiveEvent?.RaiseEvent(false);
+            stopDiscoEvent?.RaiseEvent();
             Debug.Log("[DanceEvent] GroupDance end", this);
             isGroupDanceActive = false;
         }

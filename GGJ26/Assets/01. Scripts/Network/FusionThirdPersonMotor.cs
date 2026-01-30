@@ -113,7 +113,7 @@ public class FusionThirdPersonMotor : NetworkBehaviour
             ApplyGravity(Vector3.zero);
             return;
         }
-        
+
         // Handle dance input first (hold-to-dance, edge-triggered).
         if (input.danceIndex != lastDanceIndex)
         {
@@ -133,6 +133,8 @@ public class FusionThirdPersonMotor : NetworkBehaviour
             lastDanceIndex = input.danceIndex;
         }
 
+        bool lockMovement = GameManager.Instance != null && GameManager.Instance.IsGroupDanceActive;
+
         // If we are dancing, we should not process any movement input.
         if (IsDancing)
         {
@@ -140,7 +142,7 @@ public class FusionThirdPersonMotor : NetworkBehaviour
             return;
         }
 
-        Vector3 move = new Vector3(input.Move.x, 0f, input.Move.y);
+        Vector3 move = lockMovement ? Vector3.zero : new Vector3(input.Move.x, 0f, input.Move.y);
         if (debugInput)
         {
             Debug.Log($"[FusionThirdPersonMotor] move={move} jump={input.Jump} sprint={input.Sprint}", this);
@@ -158,7 +160,7 @@ public class FusionThirdPersonMotor : NetworkBehaviour
             baseSprint = seekerSprintSpeed;
         }
 
-        float speed = input.Sprint ? baseSprint : baseMove;
+        float speed = (lockMovement == false && input.Sprint) ? baseSprint : baseMove;
         float inputMagnitude = move == Vector3.zero ? 0f : 1f;
         float cameraYaw = mainCamera != null ? mainCamera.transform.eulerAngles.y : transform.eulerAngles.y;
         float targetRotation = transform.eulerAngles.y;
@@ -172,7 +174,7 @@ public class FusionThirdPersonMotor : NetworkBehaviour
         Vector3 targetDirection = Quaternion.Euler(0f, targetRotation, 0f) * Vector3.forward;
         Vector3 horizontal = targetDirection * speed * inputMagnitude;
 
-        if (input.Jump)
+        if (lockMovement == false && input.Jump)
         {
             lastJumpPressedTime = Runner.SimulationTime;
         }
@@ -183,7 +185,7 @@ public class FusionThirdPersonMotor : NetworkBehaviour
             lastGroundedTime = Runner.SimulationTime;
         }
 
-        bool wantsJump = (Runner.SimulationTime - lastJumpPressedTime) <= jumpBufferTime;
+        bool wantsJump = lockMovement == false && (Runner.SimulationTime - lastJumpPressedTime) <= jumpBufferTime;
         bool canCoyote = (Runner.SimulationTime - lastGroundedTime) <= coyoteTime;
         bool doJump = wantsJump && canCoyote;
 

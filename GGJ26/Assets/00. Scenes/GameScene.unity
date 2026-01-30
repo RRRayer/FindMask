@@ -1381,6 +1381,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: bff2d00913296dc43a8c646622157e62, type: 2}
   - {fileID: 11400000, guid: 2ec57bf759eb8ac47b808a13ea7380fa, type: 2}
   groupDanceActiveEvent: {fileID: 11400000, guid: 2f392a79a9c07cb4d84bbadf00f5947a, type: 2}
+  startDiscoEvent: {fileID: 11400000, guid: 77aee14471927bf478b9875f59796765, type: 2}
+  stopDiscoEvent: {fileID: 11400000, guid: 2616eaedb6373ca47844971b5dada477, type: 2}
 --- !u!4 &1819755681
 Transform:
   m_ObjectHideFlags: 0
@@ -1632,6 +1634,10 @@ PrefabInstance:
       propertyPath: defaultSpawnPoint
       value: 
       objectReference: {fileID: 858449456}
+    - target: {fileID: 5635472117089175894, guid: fe9646060860870468e10550124355b1, type: 3}
+      propertyPath: groupDanceActiveEvent
+      value: 
+      objectReference: {fileID: 11400000, guid: 2f392a79a9c07cb4d84bbadf00f5947a, type: 2}
     - target: {fileID: 7863296486997111603, guid: fe9646060860870468e10550124355b1, type: 3}
       propertyPath: m_Name
       value: GameManager
@@ -1689,7 +1695,7 @@ GameObject:
   - component: {fileID: 2114283754330233425}
   - component: {fileID: 2114283754330233427}
   m_Layer: 0
-  m_Name: Directional Light
+  m_Name: Global Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

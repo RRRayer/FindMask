@@ -29,11 +29,15 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameStateEventChannelSO onGameStateChanged;
     [SerializeField] private VoidEventChannelSO onGameEnded;
     [SerializeField] private GameResultEventChannelSO onGameResult;
+    [SerializeField] private BoolEventChannelSO groupDanceActiveEvent;
 
     private GameObject player;
     private GameState currentGameState = GameState.None;
     private float remainingSeconds;
     private bool hasEnded;
+    private bool isGroupDanceActive;
+
+    public bool IsGroupDanceActive => isGroupDanceActive;
 
     public GameState InitialGameState = GameState.Gameplay;
 
@@ -50,6 +54,22 @@ public class GameManager : MonoBehaviour
         }
 
         Application.targetFrameRate = 60;
+    }
+
+    private void OnEnable()
+    {
+        if (groupDanceActiveEvent != null)
+        {
+            groupDanceActiveEvent.OnEventRaised += OnGroupDanceActive;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (groupDanceActiveEvent != null)
+        {
+            groupDanceActiveEvent.OnEventRaised -= OnGroupDanceActive;
+        }
     }
 
     private IEnumerator Start()
@@ -217,6 +237,11 @@ public class GameManager : MonoBehaviour
     {
         var runner = FindFirstObjectByType<NetworkRunner>();
         return runner == null || runner.IsRunning == false;
+    }
+
+    private void OnGroupDanceActive(bool isActive)
+    {
+        isGroupDanceActive = isActive;
     }
 }
 
