@@ -10,6 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9ac9a18068ddd304ab885179787cc6aa, type: 3}
-  m_Name: StartDisco
+  m_Name: ConfirmStopDisco
   m_EditorClassIdentifier: 
-  Description: "\uB514\uC2A4\uCF54 \uC561\uC158 \uC2DC\uC791 \uC54C\uB9BC"
+  Description: "\uB514\uC2A4\uCF54 \uC561\uC158 \uC885\uB8CC \uD655\uC815(\uBAA8\uB4E0
+    \uC5F0\uCD9C \uB05D\uB09C \uB4A4 \uBC1C\uD589)"

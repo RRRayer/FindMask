@@ -8,8 +8,8 @@ public class DiscoBall : MonoBehaviour
     [Header("이벤트 채널 설정")]
     [Tooltip("디스코볼 효과를 시작시키는 이벤트 채널입니다.")]
     public VoidEventChannelSO startDiscoEvent;
-    [Tooltip("디스코볼 효과를 중지시키는 이벤트 채널입니다.")]
-    public VoidEventChannelSO stopDiscoEvent;
+    [Tooltip("플레이어 연출이 끝난 후, 실제 종료를 시작시키는 '확정' 이벤트 채널입니다.")]
+    public VoidEventChannelSO confirmStopDiscoEvent;
 
     [Header("라이트 설정")]
     public Light[] allSpotlights;
@@ -133,13 +133,13 @@ public class DiscoBall : MonoBehaviour
     private void OnEnable()
     {
         if (startDiscoEvent != null) startDiscoEvent.OnEventRaised += StartDisco;
-        if (stopDiscoEvent != null) stopDiscoEvent.OnEventRaised += StopDisco;
+        if (confirmStopDiscoEvent != null) confirmStopDiscoEvent.OnEventRaised += StopDisco;
     }
 
     private void OnDisable()
     {
         if (startDiscoEvent != null) startDiscoEvent.OnEventRaised -= StartDisco;
-        if (stopDiscoEvent != null) stopDiscoEvent.OnEventRaised -= StopDisco;
+        if (confirmStopDiscoEvent != null) confirmStopDiscoEvent.OnEventRaised -= StopDisco;
         
         StopAllCoroutines();
         // DOTween 시퀀스도 확실하게 중지

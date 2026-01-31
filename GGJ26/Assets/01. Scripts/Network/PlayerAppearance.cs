@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Threading.Tasks;
 
 public class PlayerAppearance : MonoBehaviour
 {
@@ -15,6 +16,14 @@ public class PlayerAppearance : MonoBehaviour
     [Header("Mask Materials (optional)")]
     [SerializeField] private Renderer maskRenderer;
     [SerializeField] private Material[] maskMaterials = new Material[3];
+    
+    [Header("연출 효과")]
+    [SerializeField] private MaskEffect maskEffectPrefab;
+    [SerializeField] private Transform effectSpawnPoint;
+
+    [Header("이벤트 채널")]
+    [SerializeField] private VoidEventChannelSO stopDiscoEvent; // 종료 '요청' 이벤트
+    [SerializeField] private VoidEventChannelSO confirmStopDiscoEvent; // 종료 '확정' 이벤트
 
     [Header("Mask Change SFX (optional)")]
     [SerializeField] private AudioCueEventChannelSO sfxEventChannel;
@@ -38,6 +47,38 @@ public class PlayerAppearance : MonoBehaviour
         }
 
         AutoAssignMaskObjects();
+    }
+
+    private void OnEnable()
+    {
+        if (stopDiscoEvent != null)
+        {
+            stopDiscoEvent.OnEventRaised += OnStopDiscoRequested;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (stopDiscoEvent != null)
+        {
+            stopDiscoEvent.OnEventRaised -= OnStopDiscoRequested;
+        }
+    }
+
+    private async void OnStopDiscoRequested()
+    {
+        if (maskEffectPrefab == null || effectSpawnPoint == null)
+        {
+            confirmStopDiscoEvent?.RaiseEvent();
+            return;
+        }
+
+        // 연출용 마스크 생성 및 애니메이션 재생, 그리고 끝날 때까지 대기
+        MaskEffect effectInstance = Instantiate(maskEffectPrefab, effectSpawnPoint.position, effectSpawnPoint.rotation);
+        await effectInstance.PlayEffectSequence();
+        
+        // 연출이 끝났으므로, 디스코볼이 종료되어도 좋다는 '확정' 신호를 보냄
+        confirmStopDiscoEvent?.RaiseEvent();
     }
 
     private void LateUpdate()

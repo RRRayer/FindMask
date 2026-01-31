@@ -1759,7 +1759,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   startDiscoEvent: {fileID: 11400000, guid: 77aee14471927bf478b9875f59796765, type: 2}
-  stopDiscoEvent: {fileID: 11400000, guid: 2616eaedb6373ca47844971b5dada477, type: 2}
+  confirmStopDiscoEvent: {fileID: 11400000, guid: 719f821a96f371442bba8d125e2bcc94, type: 2}
   allSpotlights:
   - {fileID: 1164770048697408912}
   - {fileID: 4009033930369111106}
