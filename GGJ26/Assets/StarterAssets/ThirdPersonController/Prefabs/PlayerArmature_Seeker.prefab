@@ -1115,10 +1115,6 @@ MonoBehaviour:
   hitMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  showCrosshair: 1
-  crosshairSize: 24
-  crosshairThickness: 2
-  crosshairColor: {r: 1, g: 1, b: 1, a: 1}
   hitEffectPrefab: {fileID: 2684650621357901133, guid: f5d2b0efcb9d61c47909c81db6aeb8f4, type: 3}
   hitEffectLifetime: 1.5
   shootTransform: {fileID: 8645168656686294115}
@@ -3133,6 +3129,14 @@ PrefabInstance:
     - target: {fileID: 3880402156374522162, guid: a86f411d3882b394396f36ee02eae6f7, type: 3}
       propertyPath: m_Name
       value: Accatran_MG_Variant_Heavy_Laspistol_Black
+      objectReference: {fileID: 0}
+    - target: {fileID: 4379547548007205637, guid: a86f411d3882b394396f36ee02eae6f7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.0244
+      objectReference: {fileID: 0}
+    - target: {fileID: 4379547548007205637, guid: a86f411d3882b394396f36ee02eae6f7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

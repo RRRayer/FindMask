@@ -133,8 +133,7 @@ MonoBehaviour:
   m_UICollapsed: 1
   m_UISuperCollapsed: 0
   m_UIInfos: {fileID: 114340500867371532}
-  m_CustomAttributes:
-  - {fileID: 8926484042661617511}
+  m_CustomAttributes: []
   m_ParameterInfo: []
   m_ImportDependencies: []
   m_GraphVersion: 18
@@ -4590,22 +4589,6 @@ MonoBehaviour:
         PublicKeyToken=b77a5c561934e089
   m_Direction: 0
   m_LinkedSlots: []
---- !u!114 &8926484042661617511
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e1fe1c3ae22b45dea22da94bb7969561, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Description: "\uCD1D\uC54C \uBC1C\uC0AC \uBC29\uD5A5"
-  m_AttributeName: ShootDirection
-  m_Type: 2
-  m_IsExpanded: 1
 --- !u!114 &8926484042661617512
 MonoBehaviour:
   m_ObjectHideFlags: 0
