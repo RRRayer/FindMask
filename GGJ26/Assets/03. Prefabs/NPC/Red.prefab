@@ -881,6 +881,7 @@ GameObject:
   - component: {fileID: 691463538723954156}
   - component: {fileID: 2100474120000197621}
   - component: {fileID: 6977953616931262847}
+  - component: {fileID: -690496154153150223}
   m_Layer: 6
   m_Name: Red
   m_TagString: Player
@@ -1099,6 +1100,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 7632096912513734925}
+  - {fileID: -690496154153150223}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &6977953616931262847
 MonoBehaviour:
@@ -1114,6 +1116,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speedParam: Speed
   motionSpeedParam: MotionSpeed
+--- !u!114 &-690496154153150223
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3099595770319542789}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  SyncScale: 0
+  SyncParent: 0
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 0
 --- !u!1 &3107977482678064232
 GameObject:
   m_ObjectHideFlags: 0

@@ -115,10 +115,6 @@ public abstract class BaseNPC : MonoBehaviour
     /// <param name="isStart"></param>
     protected void ExecuteMaskDance(int danceIndex)
     {
-        if (HasStateAuthority == false)
-        {
-            return;
-        }
         if (currentState == ActionState.GroupDance)
         {
             // 단체 댄스 중일 때는 가면 댄스로 전환하지 않음
@@ -142,10 +138,6 @@ public abstract class BaseNPC : MonoBehaviour
     /// <param name="isStart"></param>
     protected void ExecuteGroupDance(bool isStart)
     {
-        if (HasStateAuthority == false)
-        {
-            return;
-        }
         if (NpcController == null)
         {
             return;

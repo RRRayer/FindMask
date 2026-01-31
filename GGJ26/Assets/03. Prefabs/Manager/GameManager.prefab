@@ -54,4 +54,6 @@ MonoBehaviour:
   onGameStateChanged: {fileID: 11400000, guid: 904b9174fc324c84ba436b022aa55dd5, type: 2}
   onGameEnded: {fileID: 11400000, guid: a7617ea9a6826b54fb2e7f0354afdbf9, type: 2}
   onGameResult: {fileID: 11400000, guid: 5a5f993efd703a642b33eede934483b7, type: 2}
+  groupDanceActiveEvent: {fileID: 11400000, guid: 2f392a79a9c07cb4d84bbadf00f5947a, type: 2}
+  txtTimer: {fileID: 0}
   InitialGameState: 1
