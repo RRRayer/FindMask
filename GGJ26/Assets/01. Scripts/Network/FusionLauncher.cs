@@ -23,9 +23,24 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
     [SerializeField] private NetworkObject normalPrefab;
     [SerializeField] private float fallbackSpawnRadius = 4f;
     [SerializeField] private PlayerStateManager playerStateManager;
+    [Header("Spawn Area")]
+    [SerializeField] private BoxCollider spawnArea;
+    [SerializeField] private string spawnAreaTag = "SpawnArea";
+    [SerializeField] private LayerMask spawnGroundLayers = -1;
+    [SerializeField] private float minSpawnDistance = 1.5f;
+    [SerializeField] private int spawnSeed = 1337;
+
+    [Header("NPC Spawning")]
+    [SerializeField] private NetworkObject redNpcPrefab;
+    [SerializeField] private NetworkObject blueNpcPrefab;
+    [SerializeField] private NetworkObject greenNpcPrefab;
+    [SerializeField] private int npcsPerColor = 9;
 
     private readonly Dictionary<PlayerRef, NetworkObject> spawnedPlayers = new Dictionary<PlayerRef, NetworkObject>();
     private readonly List<NetworkSpawnPoint> spawnPoints = new List<NetworkSpawnPoint>();
+    private readonly Dictionary<PlayerRef, Vector3> playerSpawnPositions = new Dictionary<PlayerRef, Vector3>();
+    private readonly List<NetworkObject> spawnedNpcs = new List<NetworkObject>();
+    private bool spawnLayoutBuilt;
 
     public event Action<bool> MatchmakingStateChanged;
     public bool IsMatchmaking => isMatchmaking;
@@ -182,10 +197,14 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     private Vector3 GetSpawnPosition(PlayerRef player)
     {
-        if (spawnPoints.Count > 0)
+        if (spawnLayoutBuilt == false)
         {
-            var index = Mathf.Abs(player.RawEncoded) % spawnPoints.Count;
-            return spawnPoints[index].transform.position;
+            BuildSpawnLayout();
+        }
+
+        if (playerSpawnPositions.TryGetValue(player, out var position))
+        {
+            return position;
         }
 
         var angle = (Mathf.Abs(player.RawEncoded) % maxPlayers) / (float)maxPlayers * Mathf.PI * 2f;
@@ -314,6 +333,8 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
         {
             SetMatchmakingState(false);
             RefreshSpawnPoints();
+            ResolveSpawnArea();
+            BuildSpawnLayout();
             TrySpawnLocalPlayer(runner.LocalPlayer);
         }
     }
@@ -569,5 +590,154 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
         {
             playerStateManager.SetLocalPlayer(playerId);
         }
+    }
+
+    private void BuildSpawnLayout()
+    {
+        if (runner == null || runner.IsRunning == false)
+        {
+            return;
+        }
+
+        int playerCount = runner.ActivePlayers.Count();
+        int npcCount = Mathf.Max(0, npcsPerColor) * 3;
+        int totalCount = playerCount + npcCount;
+        if (totalCount <= 0)
+        {
+            return;
+        }
+
+        var random = new System.Random(GetSpawnSeed());
+        var positions = new List<Vector3>(totalCount);
+        int attempts = 0;
+        int maxAttempts = totalCount * 200;
+        float minDistSqr = minSpawnDistance * minSpawnDistance;
+
+        while (positions.Count < totalCount && attempts < maxAttempts)
+        {
+            attempts++;
+            Vector3 candidate = SampleSpawnPosition(random);
+            bool ok = true;
+            for (int i = 0; i < positions.Count; i++)
+            {
+                if ((positions[i] - candidate).sqrMagnitude < minDistSqr)
+                {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok)
+            {
+                positions.Add(candidate);
+            }
+        }
+
+        if (positions.Count < totalCount)
+        {
+            Debug.LogWarning($"[FusionLauncher] Spawn positions 부족: {positions.Count}/{totalCount}. minSpawnDistance를 낮추거나 영역을 늘리세요.");
+        }
+
+        playerSpawnPositions.Clear();
+        var players = runner.ActivePlayers.OrderBy(p => p.RawEncoded).ToList();
+        int index = 0;
+        for (int i = 0; i < players.Count && index < positions.Count; i++)
+        {
+            playerSpawnPositions[players[i]] = positions[index++];
+        }
+
+        if (runner.IsSharedModeMasterClient)
+        {
+            SpawnNpcs(positions, index);
+        }
+
+        spawnLayoutBuilt = true;
+        Debug.Log($"[FusionLauncher] Spawn layout built: total={totalCount} players={playerCount} npcs={npcCount} positions={positions.Count}");
+    }
+
+    private void SpawnNpcs(List<Vector3> positions, int startIndex)
+    {
+        if (spawnedNpcs.Count > 0)
+        {
+            return;
+        }
+
+        int totalNpc = Mathf.Max(0, npcsPerColor) * 3;
+        if (totalNpc <= 0)
+        {
+            return;
+        }
+
+        NetworkObject[] prefabs = { redNpcPrefab, blueNpcPrefab, greenNpcPrefab };
+        int index = startIndex;
+        for (int color = 0; color < prefabs.Length; color++)
+        {
+            var prefab = prefabs[color];
+            if (prefab == null)
+            {
+                continue;
+            }
+
+            for (int i = 0; i < npcsPerColor && index < positions.Count; i++)
+            {
+                var npc = runner.Spawn(prefab, positions[index++], Quaternion.identity);
+                if (npc != null)
+                {
+                    spawnedNpcs.Add(npc);
+                }
+            }
+        }
+    }
+
+    private Vector3 SampleSpawnPosition(System.Random random)
+    {
+        if (spawnArea != null)
+        {
+            var bounds = spawnArea.bounds;
+            float x = (float)(bounds.min.x + (bounds.size.x * random.NextDouble()));
+            float z = (float)(bounds.min.z + (bounds.size.z * random.NextDouble()));
+            float y = bounds.max.y + 5f;
+            Vector3 origin = new Vector3(x, y, z);
+            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 1000f, spawnGroundLayers, QueryTriggerInteraction.Ignore))
+            {
+                return hit.point;
+            }
+
+            return new Vector3(x, bounds.center.y, z);
+        }
+
+        float angle = (float)random.NextDouble() * Mathf.PI * 2f;
+        float radius = (float)random.NextDouble() * fallbackSpawnRadius;
+        return new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
+    }
+
+    private void ResolveSpawnArea()
+    {
+        if (spawnArea != null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(spawnAreaTag))
+        {
+            return;
+        }
+
+        var spawnObject = GameObject.FindGameObjectWithTag(spawnAreaTag);
+        if (spawnObject == null)
+        {
+            return;
+        }
+
+        spawnArea = spawnObject.GetComponent<BoxCollider>();
+    }
+
+    private int GetSpawnSeed()
+    {
+        if (runner != null && runner.SessionInfo.IsValid && string.IsNullOrEmpty(runner.SessionInfo.Name) == false)
+        {
+            return runner.SessionInfo.Name.GetHashCode();
+        }
+
+        return spawnSeed;
     }
 }

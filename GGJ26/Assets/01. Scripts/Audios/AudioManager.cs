@@ -5,6 +5,7 @@ using UnityEngine.Serialization;
 
 public class AudioManager : MonoBehaviour
 {
+    public static AudioManager Instance { get; private set; }
     [Header("SoundEmitters Pool")]
     [SerializeField] private SoundEmitterPoolSO pool;
     [SerializeField] private int initialSize = 10;
@@ -29,6 +30,15 @@ public class AudioManager : MonoBehaviour
     
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
         soundEmitterVault = new SoundEmitterVault();
         
         pool.Prewarm(initialSize);
