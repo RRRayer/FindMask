@@ -260,7 +260,7 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
         {
             var seeker = GetDeterministicSeeker();
             bool isSeeker = player == seeker;
-            playerStateManager.RegisterPlayer(player.RawEncoded.ToString(), isSeeker);
+            playerStateManager.RegisterPlayerNetworked(player.RawEncoded.ToString(), isSeeker);
             Debug.Log($"[FusionLauncher] TrySpawnLocalPlayer: Player {player.RawEncoded} determined as seeker: {isSeeker}.");
         }
     }
@@ -597,7 +597,7 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
         }
 
         string playerId = player.RawEncoded.ToString();
-        playerStateManager.RegisterPlayer(playerId, false);
+        playerStateManager.RegisterPlayerNetworked(playerId, false);
 
         if (runner != null && player == runner.LocalPlayer)
         {

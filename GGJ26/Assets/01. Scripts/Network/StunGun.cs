@@ -156,7 +156,7 @@ public class StunGun : NetworkBehaviour
             return;
         }
 
-        target.RpcPlayDeadAnimation();
+        target.RpcRequestPlayDeadAnimation();
         target.RpcRequestEliminate();
         target.ApplyEliminatedStateImmediate();
     }
