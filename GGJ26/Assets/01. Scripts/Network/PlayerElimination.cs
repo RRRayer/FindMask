@@ -16,6 +16,7 @@ public class PlayerElimination : NetworkBehaviour
     public NetworkBool IsEliminated { get; private set; }
 
     private PlayerStateManager playerStateManager;
+    private PlayerRole _playerRole;
     private bool lastEliminated;
     private int animIDDead;
     private bool snappedToGroundOnDeath;
@@ -54,6 +55,7 @@ public class PlayerElimination : NetworkBehaviour
         }
 
         playerStateManager = FindFirstObjectByType<PlayerStateManager>();
+        _playerRole = GetComponent<PlayerRole>();
         animIDDead = Animator.StringToHash("Dead");
     }
 
@@ -153,6 +155,14 @@ public class PlayerElimination : NetworkBehaviour
             if (eliminated)
             {
                 EnsureSpectatorRig();
+                if (_playerRole != null && !_playerRole.IsSeeker)
+                {
+                    var deadUI = FindFirstObjectByType<UIDead>();
+                    if (deadUI != null)
+                    {
+                        deadUI.ShowDeadUI();
+                    }
+                }
             }
             else
             {
@@ -168,8 +178,11 @@ public class PlayerElimination : NetworkBehaviour
 
         if (eliminated && Object != null && Object.HasStateAuthority && playerStateManager != null)
         {
-            string playerId = Object.InputAuthority.RawEncoded.ToString();
-            playerStateManager.MarkDead(playerId);
+            if (Object.InputAuthority != PlayerRef.None)
+            {
+                string playerId = Object.InputAuthority.RawEncoded.ToString();
+                playerStateManager.MarkDead(playerId);
+            }
         }
     }
 

@@ -1,0 +1,15 @@
+using System.ComponentModel;
+using UnityEngine;
+
+public class UIDead : MonoBehaviour
+{
+    [SerializeField] private Canvas CanvasDead;
+    [SerializeField] private Canvas[] notDeadCanvas;
+
+    public void ShowDeadUI()
+    {
+        Debug.Log("Showing Dead UI");
+        foreach (var c in notDeadCanvas) c.enabled = false;
+        CanvasDead.enabled = true;
+    }
+}
