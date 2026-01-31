@@ -221,6 +221,7 @@ public class GameManager : MonoBehaviour
         var result = new GameResultData(seekerWin, localWin, remainingSeconds, avgReaction, history);
 
         onGameResult?.RaiseEvent(result);
+        Debug.Log("Game Ended. Seeker Win: " + seekerWin + ", Local Player Win: " + localWin);
         onGameEnded?.RaiseEvent();
     }
 
