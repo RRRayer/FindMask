@@ -32,6 +32,16 @@ public class DiscoBall : MonoBehaviour
     public bool randomizeYRotation = true;
     public float rotationSpeed = 30f;
 
+    [Header("커튼 설정")]
+    public Renderer[] curtainRenderers;
+
+    [Header("스카이박스 설정")]
+    [ColorUsage(false, true)] public Color discoSkyTint;
+
+    [Header("태양 설정")]
+    public Vector3 sunStartRotation;
+    public Vector3 sunEndRotation;
+    
     [Header("연출 설정")]
     [SerializeField] private GameObject discoObject; // 디스코볼 실제 오브젝트
     [SerializeField] private Light globalLight;
@@ -43,6 +53,10 @@ public class DiscoBall : MonoBehaviour
     private Vector3 _startPosition;
     private float _startIntensity;
     private Coroutine _discoLoopCoroutine;
+    
+    private float _originalSunSize;
+    private Color _originalSkyTint;
+    private Material _originalSkyboxMaterial;
 
     private void Awake()
     {
@@ -51,6 +65,13 @@ public class DiscoBall : MonoBehaviour
             _startPosition = discoObject.transform.position;
         }
         
+        // Store original skybox material asset
+        _originalSkyboxMaterial = RenderSettings.skybox;
+        if (_originalSkyboxMaterial != null && _originalSkyboxMaterial.shader.name == "Skybox/Procedural")
+        {
+            _originalSunSize = _originalSkyboxMaterial.GetFloat("_SunSize");
+            _originalSkyTint = _originalSkyboxMaterial.GetColor("_SkyTint");
+        }
 
         if (globalLight == null) // If globalLight is not assigned in the Inspector
         {
@@ -66,6 +87,7 @@ public class DiscoBall : MonoBehaviour
         if (globalLight != null) // Now check if globalLight is assigned (either manually or found)
         {
             _startIntensity = globalLight.intensity;
+            globalLight.transform.rotation = Quaternion.Euler(sunStartRotation);
         }
 
         // 조명을 논리적 그룹으로 나누는 로직
@@ -97,6 +119,15 @@ public class DiscoBall : MonoBehaviour
         }
 
         discoObject.SetActive(false);
+
+        if (curtainRenderers != null)
+        {
+            foreach (var renderer in curtainRenderers)
+            {
+                if(renderer != null)
+                    renderer.gameObject.SetActive(false);
+            }
+        }
     }
 
     private void OnEnable()
@@ -143,13 +174,50 @@ public class DiscoBall : MonoBehaviour
     {
         _isDiscoActive = true;
         discoObject.SetActive(true);
-        
+        if (curtainRenderers != null)
+        {
+            foreach (var renderer in curtainRenderers)
+            {
+                if (renderer != null)
+                    renderer.gameObject.SetActive(true);
+            }
+        }
+
+        // Handle Skybox Material Instantiation
+        Material currentSkyboxMaterial = _originalSkyboxMaterial;
+        if (_originalSkyboxMaterial != null && _originalSkyboxMaterial.shader.name == "Skybox/Procedural")
+        {
+            // Create a temporary instance of the skybox material to modify
+            currentSkyboxMaterial = new Material(_originalSkyboxMaterial);
+            RenderSettings.skybox = currentSkyboxMaterial;
+        }
+
+
         Sequence sequence = DOTween.Sequence();
         if (globalLight != null)
         {
             sequence.Join(globalLight.DOIntensity(0.1f, transitionDuration));
+            sequence.Join(globalLight.transform.DORotate(sunEndRotation, transitionDuration));
         }
         sequence.Join(discoObject.transform.DOMoveY(_startPosition.y - yOffset, transitionDuration));
+        
+        if (curtainRenderers != null && curtainRenderers.Length > 0)
+        {
+            sequence.Join(DOTween.To(() => 0f, x =>
+            {
+                foreach (var renderer in curtainRenderers)
+                {
+                    if (renderer != null)
+                        renderer.material.SetFloat("_Progress", x);
+                }
+            }, 1f, transitionDuration));
+        }
+        
+        if (currentSkyboxMaterial != null && currentSkyboxMaterial.shader.name == "Skybox/Procedural")
+        {
+            sequence.Join(currentSkyboxMaterial.DOFloat(0f, "_SunSize", transitionDuration));
+            sequence.Join(currentSkyboxMaterial.DOColor(discoSkyTint, "_SkyTint", transitionDuration));
+        }
         
         yield return sequence.WaitForCompletion();
 
@@ -172,9 +240,49 @@ public class DiscoBall : MonoBehaviour
         if (globalLight != null)
         {
             sequence.Join(globalLight.DOIntensity(_startIntensity, transitionDuration));
+            sequence.Join(globalLight.transform.DORotate(sunStartRotation, transitionDuration));
         }
         sequence.Join(discoObject.transform.DOMoveY(_startPosition.y, transitionDuration));
-        sequence.OnComplete(() => discoObject.SetActive(false));
+        
+        if (curtainRenderers != null && curtainRenderers.Length > 0)
+        {
+            sequence.Join(DOTween.To(() => 1f, x =>
+            {
+                foreach (var renderer in curtainRenderers)
+                {
+                    if(renderer != null)
+                        renderer.material.SetFloat("_Progress", x);
+                }
+            }, 0f, transitionDuration));
+        }
+        
+        // Animate the current skybox (which is the temporary one) back to original values
+        if (RenderSettings.skybox != null && RenderSettings.skybox.shader.name == "Skybox/Procedural")
+        {
+            sequence.Join(RenderSettings.skybox.DOFloat(_originalSunSize, "_SunSize", transitionDuration));
+            sequence.Join(RenderSettings.skybox.DOColor(_originalSkyTint, "_SkyTint", transitionDuration));
+        }
+        
+        sequence.OnComplete(() =>
+        {
+            discoObject.SetActive(false);
+            if (curtainRenderers != null)
+            {
+                foreach (var renderer in curtainRenderers)
+                {
+                    if(renderer != null)
+                        renderer.gameObject.SetActive(false);
+                }
+            }
+            
+            // Restore original skybox material and destroy the temporary one
+            if (RenderSettings.skybox != null && RenderSettings.skybox != _originalSkyboxMaterial)
+            {
+                Material tempMaterialToDestroy = RenderSettings.skybox; // Get reference to the temporary material
+                RenderSettings.skybox = _originalSkyboxMaterial; // Restore original
+                Destroy(tempMaterialToDestroy); // Destroy the temporary material
+            }
+        });
         
         yield return sequence.WaitForCompletion();
     }
