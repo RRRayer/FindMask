@@ -194,6 +194,11 @@ MonoBehaviour:
   cameraController: {fileID: 0}
   spectatorController: {fileID: 2233445735992974238}
   bodyRenderers: []
+  animator: {fileID: 0}
+  spectatorRigPrefab: {fileID: 2070925441746177671, guid: a1a802ecaf6775746bb2a929fb554ad8, type: 3}
+  deathGroundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
   _IsEliminated:
     _value: 0
 --- !u!114 &4849161580012950415
@@ -219,10 +224,12 @@ MonoBehaviour:
   crosshairColor: {r: 1, g: 1, b: 1, a: 1}
   hitEffectPrefab: {fileID: 0}
   hitEffectLifetime: 1.5
+  fogEffectPrefab: {fileID: 0}
   sfxEventChannel: {fileID: 11400000, guid: 06d6e7e2f1efcf34091297cc2951787b, type: 2}
   sfxConfiguration: {fileID: 11400000, guid: 854501da1c4d88b498813056f7cc098d, type: 2}
   shootSfxCue: {fileID: 11400000, guid: 07ce1e08503ce9e4ab531c18151365e7, type: 2}
   hitSfxCue: {fileID: 11400000, guid: 83639e1cdc0b7644dbaaf8619be44c49, type: 2}
+  rotateDuration: 0.05
 --- !u!114 &2233445735992974238
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -237,6 +244,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 6
   verticalSpeed: 4
+  lookSensitivity: 0.15
+  minPitch: -80
+  maxPitch: 80
+  cameraObjectName: PlayerFollowCamera
+  bindAllVirtualCameras: 0
 --- !u!95 &6402808278377447435
 Animator:
   serializedVersion: 7

@@ -1,3 +1,4 @@
+using Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -8,10 +9,16 @@ public class SpectatorController : MonoBehaviour
     [SerializeField] private float lookSensitivity = 0.15f;
     [SerializeField] private float minPitch = -80f;
     [SerializeField] private float maxPitch = 80f;
+    [Header("Cinemachine")]
+    [SerializeField] private string cameraObjectName = "PlayerFollowCamera";
+    [SerializeField] private bool bindAllVirtualCameras = false;
 
     private Camera mainCamera;
     private float yaw;
     private float pitch;
+    private CinemachineVirtualCamera boundCamera;
+    private Transform previousFollow;
+    private Transform previousLookAt;
 
     private void Awake()
     {
@@ -20,6 +27,14 @@ public class SpectatorController : MonoBehaviour
 
     private void OnEnable()
     {
+        if (mainCamera != null)
+        {
+            transform.position = mainCamera.transform.position;
+            transform.rotation = mainCamera.transform.rotation;
+        }
+
+        BindCameraTargets();
+
         var forward = transform.forward;
         yaw = Mathf.Atan2(forward.x, forward.z) * Mathf.Rad2Deg;
         pitch = 0f;
@@ -29,6 +44,7 @@ public class SpectatorController : MonoBehaviour
 
     private void OnDisable()
     {
+        RestoreCameraTargets();
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
@@ -81,5 +97,55 @@ public class SpectatorController : MonoBehaviour
         move += vertical * verticalSpeed;
 
         transform.position += move * Time.deltaTime;
+    }
+
+    private void BindCameraTargets()
+    {
+        if (bindAllVirtualCameras)
+        {
+            var cameras = FindObjectsByType<CinemachineVirtualCamera>(FindObjectsSortMode.None);
+            foreach (var virtualCamera in cameras)
+            {
+                virtualCamera.Follow = transform;
+                virtualCamera.LookAt = transform;
+            }
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(cameraObjectName))
+        {
+            return;
+        }
+
+        var cameraObject = GameObject.Find(cameraObjectName);
+        if (cameraObject == null)
+        {
+            return;
+        }
+
+        boundCamera = cameraObject.GetComponent<CinemachineVirtualCamera>();
+        if (boundCamera == null)
+        {
+            return;
+        }
+
+        previousFollow = boundCamera.Follow;
+        previousLookAt = boundCamera.LookAt;
+        boundCamera.Follow = transform;
+        boundCamera.LookAt = transform;
+    }
+
+    private void RestoreCameraTargets()
+    {
+        if (boundCamera == null)
+        {
+            return;
+        }
+
+        boundCamera.Follow = previousFollow;
+        boundCamera.LookAt = previousLookAt;
+        boundCamera = null;
+        previousFollow = null;
+        previousLookAt = null;
     }
 }

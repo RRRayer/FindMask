@@ -9,6 +9,7 @@ public class PlayerElimination : NetworkBehaviour
     [SerializeField] private SpectatorController spectatorController;
     [SerializeField] private Renderer[] bodyRenderers;
     [SerializeField] private Animator animator;
+    [SerializeField] private GameObject spectatorRigPrefab;
     [SerializeField] private LayerMask deathGroundLayers = -1;
 
     [Networked]
@@ -18,6 +19,7 @@ public class PlayerElimination : NetworkBehaviour
     private bool lastEliminated;
     private int animIDDead;
     private bool snappedToGroundOnDeath;
+    private GameObject spectatorInstance;
 
     private void Awake()
     {
@@ -122,7 +124,7 @@ public class PlayerElimination : NetworkBehaviour
 
         if (spectatorController != null)
         {
-            spectatorController.enabled = eliminated && Object != null && Object.HasInputAuthority;
+            spectatorController.enabled = false;
         }
 
         if (cameraController != null)
@@ -141,6 +143,18 @@ public class PlayerElimination : NetworkBehaviour
             }
         }
 
+        if (Object != null && Object.HasInputAuthority)
+        {
+            if (eliminated)
+            {
+                EnsureSpectatorRig();
+            }
+            else
+            {
+                CleanupSpectatorRig();
+            }
+        }
+
         if (eliminated && animator != null)
         {
             animator.SetTrigger(animIDDead);
@@ -151,6 +165,54 @@ public class PlayerElimination : NetworkBehaviour
         {
             string playerId = Object.InputAuthority.RawEncoded.ToString();
             playerStateManager.MarkDead(playerId);
+        }
+    }
+
+    private void EnsureSpectatorRig()
+    {
+        if (spectatorRigPrefab == null)
+        {
+            if (spectatorController != null)
+            {
+                spectatorController.enabled = true;
+            }
+            return;
+        }
+
+        if (spectatorInstance != null)
+        {
+            return;
+        }
+
+        Vector3 position = transform.position;
+        Quaternion rotation = transform.rotation;
+        var mainCamera = Camera.main;
+        if (mainCamera != null)
+        {
+            position = mainCamera.transform.position;
+            rotation = mainCamera.transform.rotation;
+        }
+
+        spectatorInstance = Instantiate(spectatorRigPrefab, position, rotation);
+        var spectator = spectatorInstance.GetComponent<SpectatorController>();
+        if (spectator == null)
+        {
+            spectator = spectatorInstance.AddComponent<SpectatorController>();
+        }
+        spectator.enabled = true;
+    }
+
+    private void CleanupSpectatorRig()
+    {
+        if (spectatorInstance != null)
+        {
+            Destroy(spectatorInstance);
+            spectatorInstance = null;
+        }
+
+        if (spectatorController != null)
+        {
+            spectatorController.enabled = false;
         }
     }
 
