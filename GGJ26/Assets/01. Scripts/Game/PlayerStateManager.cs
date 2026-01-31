@@ -43,6 +43,40 @@ public class PlayerStateManager : MonoBehaviour
         }
     }
 
+    public int GetAlivePlayerCount()
+    {
+        int count = 0;
+        foreach (var entry in players.Values)
+        {
+            if (entry.IsDead == false)
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public int GetTotalPlayerCount()
+    {
+        return players.Count;
+    }
+
+    public PlayerState GetLastAlivePlayer()
+    {
+        if (GetAlivePlayerCount() != 1)
+        {
+            return null;
+        }
+        foreach (var entry in players.Values)
+        {
+            if (entry.IsDead == false)
+            {
+                return entry;
+            }
+        }
+        return null;
+    }
+
     public int GetAliveNonSeekersCount()
     {
         int count = 0;
@@ -71,9 +105,23 @@ public class PlayerStateManager : MonoBehaviour
         return count;
     }
 
+    public int GetTotalNonSeekersCount()
+    {
+        int count = 0;
+        foreach (var entry in players.Values)
+        {
+            if (entry.IsSeeker == false)
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+
     public bool AreAllNonSeekersDead()
     {
-        return GetAliveNonSeekersCount() == 0 && GetSeekersCount() > 0;
+        // The game should end if there was at least one non-seeker to begin with, and now there are none left alive.
+        return GetTotalNonSeekersCount() > 0 && GetAliveNonSeekersCount() == 0;
     }
 
     public bool TryGetLocalPlayer(out PlayerState state)
@@ -98,3 +146,4 @@ public class PlayerStateManager : MonoBehaviour
         return players.TryGetValue(playerId, out state);
     }
 }
+
