@@ -29,7 +29,8 @@ public class FusionThirdPersonMotor : NetworkBehaviour
     private float inputMagnitude;
     
     // This property is an infrequent event, so it's fine to keep it networked.
-    [Networked] private NetworkBool IsDancing { get; set; }
+    [Networked] private NetworkBool NetIsDancing { get; set; }
+    [Networked] private int NetDanceIndex { get; set; }
 
     private CharacterController controller;
     private Animator animator;
@@ -54,6 +55,8 @@ public class FusionThirdPersonMotor : NetworkBehaviour
     
     // --- FIX: Added for local animation state calculation ---
     private Vector3 lastRenderPosition;
+    private bool lastNetIsDancing;
+    private int lastNetDanceIndex;
 
     private void Awake()
     {
@@ -87,23 +90,29 @@ public class FusionThirdPersonMotor : NetworkBehaviour
     {
 	    base.Spawned();
 	    lastRenderPosition = transform.position;
+        lastNetIsDancing = NetIsDancing;
+        lastNetDanceIndex = NetDanceIndex;
+        if (NetIsDancing)
+        {
+            ApplyDanceStart();
+        }
     }
 
     public void StartDance(int danceIndex)
     {
         if (hasAnimator == false) return;
 
-        IsDancing = true;
-        animator.SetInteger(animIDDanceIndex, danceIndex);
-        animator.SetTrigger(animIDStartDance);
+        NetDanceIndex = danceIndex;
+        NetIsDancing = true;
+        ApplyDanceStart();
     }
 
     public void StopDance()
     {
         if (hasAnimator == false) return;
 
-        IsDancing = false;
-        animator.SetTrigger(animIDStopDance);
+        NetIsDancing = false;
+        ApplyDanceStop();
     }
 
     public override void FixedUpdateNetwork()
@@ -150,7 +159,7 @@ public class FusionThirdPersonMotor : NetworkBehaviour
         bool lockMovement = GameManager.Instance != null && GameManager.Instance.IsGroupDanceActive;
 
         // If we are dancing, we should not process any movement input.
-        if (IsDancing)
+        if (NetIsDancing)
         {
             ApplyGravity(Vector3.zero);
             return;
@@ -247,6 +256,20 @@ public class FusionThirdPersonMotor : NetworkBehaviour
             return;
         }
 
+        if (NetIsDancing != lastNetIsDancing || NetDanceIndex != lastNetDanceIndex)
+        {
+            lastNetIsDancing = NetIsDancing;
+            lastNetDanceIndex = NetDanceIndex;
+            if (NetIsDancing)
+            {
+                ApplyDanceStart();
+            }
+            else
+            {
+                ApplyDanceStop();
+            }
+        }
+
         // On proxies, we derive animation state from the NetworkTransform's movement.
         Vector3 currentVelocity = (transform.position - lastRenderPosition) / Time.deltaTime;
         lastRenderPosition = transform.position;
@@ -271,4 +294,22 @@ public class FusionThirdPersonMotor : NetworkBehaviour
         animator.SetFloat(animIDSpeed, speed);
         animator.SetFloat(animIDMotionSpeed, speed > 0.01f ? 1f : 0f);
     }
+
+    private void ApplyDanceStart()
+    {
+        if (hasAnimator == false) return;
+
+        animator.SetInteger(animIDDanceIndex, NetDanceIndex);
+        animator.ResetTrigger(animIDStopDance);
+        animator.SetTrigger(animIDStartDance);
+    }
+
+    private void ApplyDanceStop()
+    {
+        if (hasAnimator == false) return;
+
+        animator.ResetTrigger(animIDStartDance);
+        animator.SetTrigger(animIDStopDance);
+    }
+
 }
