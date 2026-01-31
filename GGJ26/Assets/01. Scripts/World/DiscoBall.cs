@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using TMPro;
 
 public class DiscoBall : MonoBehaviour
 {
@@ -48,6 +49,7 @@ public class DiscoBall : MonoBehaviour
     [SerializeField] private float yOffset = 5f;
     [SerializeField] private float transitionDuration = 1.5f;
     [SerializeField] private GameObject textCanvas;
+    [SerializeField] private TextMeshProUGUI dancingText;
 
     private List<List<Light>> _logicalLightGroups = new List<List<Light>>();
     private bool _isDiscoActive = false;
@@ -58,6 +60,8 @@ public class DiscoBall : MonoBehaviour
     private float _originalSunSize;
     private Color _originalSkyTint;
     private Material _originalSkyboxMaterial;
+
+    private Sequence _dancingTextSequence;
 
     private void Awake()
     {
@@ -131,6 +135,12 @@ public class DiscoBall : MonoBehaviour
         }
         
         textCanvas.SetActive(false);
+        if (dancingText != null)
+        {
+            dancingText.transform.localPosition = Vector3.zero;
+            dancingText.transform.localRotation = Quaternion.identity;
+            dancingText.transform.localScale = Vector3.one;
+        }
     }
 
     private void OnEnable()
@@ -147,6 +157,7 @@ public class DiscoBall : MonoBehaviour
         StopAllCoroutines();
         // DOTween 시퀀스도 확실하게 중지
         DOTween.Kill(this);
+        _dancingTextSequence?.Kill();
     }
 
     void Update()
@@ -226,6 +237,36 @@ public class DiscoBall : MonoBehaviour
         
         // Handle Text "Dancing Time" Objet
         textCanvas.SetActive(true);
+        if (dancingText != null)
+        {
+            // 애니메이션 시작 전 초기화
+            dancingText.transform.localPosition = Vector3.zero;
+            dancingText.transform.localRotation = Quaternion.identity;
+            dancingText.transform.localScale = Vector3.one;
+
+            // 애니메이션 시퀀스 생성
+            _dancingTextSequence = DOTween.Sequence();
+            
+            // 1. 리듬에 맞춰 크기 변경 (Yoyo 루프)
+            var scaleAnim = dancingText.transform.DOScale(1.2f, 0.4f)
+                .SetLoops(-1, LoopType.Yoyo)
+                .SetEase(Ease.InOutSine);
+            
+            // 2. 좌우로 기울이기 (Yoyo 루프)
+            var rotationAnim = dancingText.transform.DORotate(new Vector3(0, 0, 15), 0.6f)
+                .SetEase(Ease.InOutSine)
+                .SetLoops(-1, LoopType.Yoyo);
+            
+            // 3. 위로 서서히 이동
+            var moveAnim = dancingText.transform.DOLocalMoveY(1250f, 6f)
+                .SetEase(Ease.Linear);
+
+            // 시퀀스에 애니메이션 결합
+            _dancingTextSequence.Append(moveAnim) // 위로 이동하는 것을 메인으로
+                                .Join(scaleAnim)    // 크기 변경을 동시에 진행
+                                .Join(rotationAnim)   // 회전을 동시에 진행
+                                .SetTarget(dancingText.gameObject); // 오브젝트 파괴 시 자동 Kill
+        }
         
         yield return sequence.WaitForCompletion();
 
@@ -241,6 +282,15 @@ public class DiscoBall : MonoBehaviour
             _discoLoopCoroutine = null;
         }
         
+        _dancingTextSequence?.Kill();
+        if (dancingText != null)
+        {
+            dancingText.transform.localPosition = Vector3.zero;
+            dancingText.transform.localRotation = Quaternion.identity;
+            dancingText.transform.localScale = Vector3.one;
+        }
+        textCanvas.SetActive(false);
+
         foreach (var group in _logicalLightGroups) TurnOffLightsInGroup(group);
         if (centralPointLight != null) centralPointLight.enabled = false;
         
@@ -291,8 +341,6 @@ public class DiscoBall : MonoBehaviour
                 Destroy(tempMaterialToDestroy); // Destroy the temporary material
             }
         });
-        
-        textCanvas.SetActive(false);
         
         yield return sequence.WaitForCompletion();
     }
