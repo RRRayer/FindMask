@@ -1514,6 +1514,9 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  sfxEventChannel: {fileID: 11400000, guid: 06d6e7e2f1efcf34091297cc2951787b, type: 2}
+  sfxConfiguration: {fileID: 11400000, guid: 854501da1c4d88b498813056f7cc098d, type: 2}
+  maskChangeSfxCue: {fileID: 11400000, guid: 45a4ef5f671650440b6ef21782e00bd4, type: 2}
 --- !u!1 &4523139366846529165
 GameObject:
   m_ObjectHideFlags: 0

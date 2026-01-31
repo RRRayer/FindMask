@@ -203,4 +203,49 @@ public class PlayerRole : NetworkBehaviour
     {
         return MaskColorIndex;
     }
+
+    public bool TrySetMaskColorIndex(int newIndex)
+    {
+        if (Object == null || Object.HasStateAuthority == false)
+        {
+            return false;
+        }
+
+        if (IsSeeker)
+        {
+            return false;
+        }
+
+        MaskColorIndex = newIndex;
+        MaskAssigned = true;
+        return true;
+    }
+
+    public void RequestMaskColorChange(int newIndex)
+    {
+        if (Object == null)
+        {
+            return;
+        }
+
+        if (Object.HasStateAuthority)
+        {
+            TrySetMaskColorIndex(newIndex);
+            return;
+        }
+
+        RpcRequestSetMaskColorIndex(newIndex);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RpcRequestSetMaskColorIndex(int newIndex)
+    {
+        if (IsSeeker)
+        {
+            return;
+        }
+
+        MaskColorIndex = newIndex;
+        MaskAssigned = true;
+    }
 }

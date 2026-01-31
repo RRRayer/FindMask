@@ -16,8 +16,14 @@ public class PlayerAppearance : MonoBehaviour
     [SerializeField] private Renderer maskRenderer;
     [SerializeField] private Material[] maskMaterials = new Material[3];
 
+    [Header("Mask Change SFX (optional)")]
+    [SerializeField] private AudioCueEventChannelSO sfxEventChannel;
+    [SerializeField] private AudioConfigurationSO sfxConfiguration;
+    [SerializeField] private AudioCueSO maskChangeSfxCue;
+
     private bool lastIsSeeker;
     private int lastMaskIndex = -2;
+    private bool hasInitializedMask;
 
     private void Awake()
     {
@@ -53,6 +59,14 @@ public class PlayerAppearance : MonoBehaviour
         if (maskIndex != lastMaskIndex)
         {
             ApplyMaskVisual(maskIndex);
+            if (hasInitializedMask)
+            {
+                PlayMaskChangeSfx();
+            }
+            else
+            {
+                hasInitializedMask = true;
+            }
             lastMaskIndex = maskIndex;
         }
 
@@ -93,6 +107,16 @@ public class PlayerAppearance : MonoBehaviour
                 maskRenderer.sharedMaterial = material;
             }
         }
+    }
+
+    private void PlayMaskChangeSfx()
+    {
+        if (sfxEventChannel == null || sfxConfiguration == null || maskChangeSfxCue == null)
+        {
+            return;
+        }
+
+        sfxEventChannel.RaisePlayEvent(maskChangeSfxCue, sfxConfiguration, transform.position);
     }
 
     private void AutoAssignMaskObjects()
