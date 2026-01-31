@@ -48,6 +48,7 @@ public class GameManager : NetworkBehaviour
 
     [Networked] private float NetRemainingSeconds { get; set; }
     [Networked] private NetworkBool NetTimerRunning { get; set; }
+    [Networked] private double NetStartTime { get; set; }
 
     public bool IsGroupDanceActive => isGroupDanceActive;
 
@@ -136,6 +137,7 @@ public class GameManager : NetworkBehaviour
         {
             NetRemainingSeconds = totalGameSeconds;
             NetTimerRunning = false;
+            NetStartTime = Runner != null ? Runner.SimulationTime : 0d;
         }
         hasEnded = false;
         UpdateGameState(InitialGameState);
@@ -204,14 +206,7 @@ public class GameManager : NetworkBehaviour
             return;
         }
 
-        if (hasSpawned == false)
-        {
-            remainingSeconds = Mathf.Max(0f, remainingSeconds - Time.deltaTime);
-        }
-        else
-        {
-            remainingSeconds = NetRemainingSeconds;
-        }
+        remainingSeconds = hasSpawned ? NetRemainingSeconds : totalGameSeconds;
 
         if (txtTimer != null)
         {
@@ -381,6 +376,7 @@ public class GameManager : NetworkBehaviour
         {
             NetRemainingSeconds = totalGameSeconds;
             NetTimerRunning = false;
+            NetStartTime = Runner != null ? Runner.SimulationTime : 0d;
         }
     }
 
@@ -402,11 +398,15 @@ public class GameManager : NetworkBehaviour
             if (NetTimerRunning == false)
             {
                 NetRemainingSeconds = totalGameSeconds;
+                NetStartTime = Runner.SimulationTime;
                 return;
             }
+
+            NetStartTime = Runner.SimulationTime;
         }
 
-        NetRemainingSeconds = Mathf.Max(0f, NetRemainingSeconds - Runner.DeltaTime);
+        double elapsed = Runner.SimulationTime - NetStartTime;
+        NetRemainingSeconds = Mathf.Max(0f, totalGameSeconds - (float)elapsed);
     }
 
     private bool AreAllPlayersPresent()
