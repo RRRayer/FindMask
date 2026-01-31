@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -32,6 +32,7 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
     [SerializeField] private bool useGridSampling = true;
     [Range(0f, 0.45f)]
     [SerializeField] private float gridJitter = 0.35f;
+    [SerializeField] private bool preferSpawnPoints = true;
 
     [Header("NPC Spawning")]
     [SerializeField] private NetworkObject redNpcPrefab;
@@ -337,6 +338,7 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (IsGameScene())
         {
+            ResetSpawnLayoutForScene();
             SetMatchmakingState(false);
             RefreshSpawnPoints();
             ResolveSpawnArea();
@@ -611,7 +613,7 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
         }
 
         ResolveSpawnArea();
-        if (spawnArea == null && hasSpawnBounds == false)
+        if (spawnArea == null && hasSpawnBounds == false && (preferSpawnPoints == false || spawnPoints.Count == 0))
         {
             Debug.LogWarning("[FusionLauncher] SpawnArea not found. Using fallback radius.", this);
         }
@@ -626,7 +628,11 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         var random = new System.Random(GetSpawnSeed());
         var positions = new List<Vector3>(totalCount);
-        if ((spawnArea != null || hasSpawnBounds) && useGridSampling)
+        if (preferSpawnPoints && spawnPoints.Count > 0)
+        {
+            positions.AddRange(GetSpawnPointPositions(totalCount, random));
+        }
+        else if ((spawnArea != null || hasSpawnBounds) && useGridSampling)
         {
             positions.AddRange(GenerateGridPositions(totalCount, random));
         }
@@ -658,7 +664,8 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         if (positions.Count < totalCount)
         {
-            Debug.LogWarning($"[FusionLauncher] Spawn positions 부족: {positions.Count}/{totalCount}. SpawnArea 크기를 늘리거나 Grid Sampling을 켜세요.");
+            Debug.LogWarning($"[FusionLauncher] Spawn positions 부족: {positions.Count}/{totalCount}. 최소 거리 완화로 채웁니다.");
+            FillMissingPositions(positions, totalCount, random);
         }
 
         playerSpawnPositions.Clear();
@@ -718,6 +725,8 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
                 }
             }
         }
+
+        Debug.Log($"[FusionLauncher] SpawnNpcs done: spawned={spawnedNpcs.Count}/{totalNpc}", this);
     }
 
     private Vector3 SampleSpawnPosition(System.Random random)
@@ -824,6 +833,11 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
             return;
         }
 
+        if (preferSpawnPoints && spawnPoints.Count > 0)
+        {
+            return;
+        }
+
         GameObject spawnObject = null;
         if (string.IsNullOrWhiteSpace(spawnAreaTag) == false)
         {
@@ -837,7 +851,14 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         if (spawnObject == null)
         {
-            spawnObject = GameObject.FindGameObjectWithTag("SpawnPoint");
+            try
+            {
+                spawnObject = GameObject.FindGameObjectWithTag("SpawnPoint");
+            }
+            catch (UnityException)
+            {
+                // Tag doesn't exist, ignore.
+            }
         }
 
         if (spawnObject == null)
@@ -875,6 +896,84 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
         spawnBoundsCenter = bounds.center;
         spawnBoundsSize = bounds.size;
         hasSpawnBounds = true;
+    }
+
+
+    private void ResetSpawnLayoutForScene()
+    {
+        spawnLayoutBuilt = false;
+        hasSpawnBounds = false;
+        spawnArea = null;
+        playerSpawnPositions.Clear();
+        spawnedNpcs.Clear();
+    }
+
+    private void FillMissingPositions(List<Vector3> positions, int totalCount, System.Random random)
+    {
+        if (positions.Count >= totalCount)
+        {
+            return;
+        }
+
+        int attempts = 0;
+        int maxAttempts = (totalCount - positions.Count) * 50;
+        float relaxedMinDist = Mathf.Max(0.25f, minSpawnDistance * 0.25f);
+        float minDistSqr = relaxedMinDist * relaxedMinDist;
+
+        while (positions.Count < totalCount && attempts < maxAttempts)
+        {
+            attempts++;
+            Vector3 candidate = SampleSpawnPosition(random);
+            bool ok = true;
+            for (int i = 0; i < positions.Count; i++)
+            {
+                if ((positions[i] - candidate).sqrMagnitude < minDistSqr)
+                {
+                    ok = false;
+                    break;
+                }
+            }
+
+            if (ok)
+            {
+                positions.Add(candidate);
+            }
+        }
+    }
+
+    private List<Vector3> GetSpawnPointPositions(int count, System.Random random)
+    {
+        var results = new List<Vector3>(count);
+        if (spawnPoints == null || spawnPoints.Count == 0)
+        {
+            return results;
+        }
+
+        var candidates = new List<Vector3>(spawnPoints.Count);
+        for (int i = 0; i < spawnPoints.Count; i++)
+        {
+            candidates.Add(spawnPoints[i].transform.position);
+        }
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            int swap = random.Next(i, candidates.Count);
+            var temp = candidates[i];
+            candidates[i] = candidates[swap];
+            candidates[swap] = temp;
+        }
+
+        for (int i = 0; i < candidates.Count && results.Count < count; i++)
+        {
+            results.Add(candidates[i]);
+        }
+
+        if (results.Count < count)
+        {
+            Debug.LogWarning($"[FusionLauncher] SpawnPoint 부족: {results.Count}/{count}. SpawnPoint를 더 배치하세요.", this);
+        }
+
+        return results;
     }
 
     private int GetSpawnSeed()
