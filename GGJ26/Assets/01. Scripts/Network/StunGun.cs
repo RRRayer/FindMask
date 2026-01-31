@@ -16,6 +16,8 @@ public class StunGun : NetworkBehaviour
     [Header("Hit Effect")]
     [SerializeField] private GameObject hitEffectPrefab;
     [SerializeField] private float hitEffectLifetime = 1.5f;
+    [Header("AI Death Effect")]
+    [SerializeField] private GameObject fogEffectPrefab;
     [Header("Audio")]
     [SerializeField] private AudioCueEventChannelSO sfxEventChannel;
     [SerializeField] private AudioConfigurationSO sfxConfiguration;
@@ -87,7 +89,19 @@ public class StunGun : NetworkBehaviour
             var npc = hit.collider.GetComponentInParent<BaseNPC>();
             if (npc != null)
             {
-                Destroy(npc.gameObject);
+                RpcSpawnFogEffect(npc.transform.position, npc.transform.rotation);
+                var npcObject = npc.GetComponent<NetworkObject>();
+                if (npcObject != null && Runner != null && Runner.IsRunning)
+                {
+                    if (Object.HasStateAuthority)
+                    {
+                        Runner.Despawn(npcObject);
+                    }
+                }
+                else
+                {
+                    Destroy(npc.gameObject);
+                }
             }
             return;
         }
@@ -118,6 +132,17 @@ public class StunGun : NetworkBehaviour
         }
 
         sfxEventChannel.RaisePlayEvent(cue, sfxConfiguration, position);
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+    private void RpcSpawnFogEffect(Vector3 position, Quaternion rotation)
+    {
+        if (fogEffectPrefab == null)
+        {
+            return;
+        }
+
+        Instantiate(fogEffectPrefab, position, rotation);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
