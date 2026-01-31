@@ -83,6 +83,10 @@ public class GameManager : NetworkBehaviour
         {
             groupDanceActiveEvent.OnEventRaised += OnGroupDanceActive;
         }
+        if (playerStateManager != null)
+        {
+            playerStateManager.OnPlayerStateChanged += OnPlayerStateChanged;
+        }
     }
 
     private void OnDisable()
@@ -91,6 +95,32 @@ public class GameManager : NetworkBehaviour
         if (groupDanceActiveEvent != null)
         {
             groupDanceActiveEvent.OnEventRaised -= OnGroupDanceActive;
+        }
+        if (playerStateManager != null)
+        {
+            playerStateManager.OnPlayerStateChanged -= OnPlayerStateChanged;
+        }
+    }
+    
+    private void OnPlayerStateChanged(PlayerState updatedState)
+    {
+        if (playerStateManager.TryGetLocalPlayer(out var localState))
+        {
+            if (updatedState.PlayerId == localState.PlayerId)
+            {
+                if (uiCanvasManager != null)
+                {
+                    Debug.Log($"[GameManager] OnPlayerStateChanged: Local player role is now Seeker = {updatedState.IsSeeker}. Updating UI.");
+                    if (updatedState.IsSeeker)
+                    {
+                        uiCanvasManager.EnableSeekerCanvas();
+                    }
+                    else
+                    {
+                        uiCanvasManager.EnableHiderCanvas();
+                    }
+                }
+            }
         }
     }
 
@@ -166,21 +196,6 @@ public class GameManager : NetworkBehaviour
         {
             if (TrySetupPlayerAnchor())
             {
-                // Once player is set up, determine their role and set the UI
-                if (playerStateManager != null && uiCanvasManager != null)
-                {
-                    if (playerStateManager.TryGetLocalPlayer(out var localState))
-                    {
-                        if (localState.IsSeeker)
-                        {
-                            uiCanvasManager.EnableSeekerCanvas();
-                        }
-                        else
-                        {
-                            uiCanvasManager.EnableHiderCanvas();
-                        }
-                    }
-                }
                 yield break; 
             }
             yield return null;
