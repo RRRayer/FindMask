@@ -77,6 +77,7 @@ namespace StarterAssets
 		{
 			dance4 = value.isPressed;
 		}
+
 #endif
 
 

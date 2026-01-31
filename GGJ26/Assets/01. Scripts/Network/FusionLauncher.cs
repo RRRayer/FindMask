@@ -380,6 +380,10 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
             else if (IsDancePressed(playerInput, "Dance2")) data.danceIndex = 1;
             else if (IsDancePressed(playerInput, "Dance3")) data.danceIndex = 2;
             else if (IsDancePressed(playerInput, "Dance4")) data.danceIndex = 3;
+            if (data.danceIndex == -1 && Keyboard.current != null && Keyboard.current.fKey.isPressed)
+            {
+                data.danceIndex = 4;
+            }
         }
         else
         {
@@ -387,6 +391,7 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
             else if (starterInputs.dance2) data.danceIndex = 1;
             else if (starterInputs.dance3) data.danceIndex = 2;
             else if (starterInputs.dance4) data.danceIndex = 3;
+            else if (Keyboard.current != null && Keyboard.current.fKey.isPressed) data.danceIndex = 4;
         }
 
         input.Set(data);

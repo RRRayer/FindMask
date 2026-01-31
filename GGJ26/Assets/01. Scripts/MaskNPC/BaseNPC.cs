@@ -170,7 +170,7 @@ public abstract class BaseNPC : MonoBehaviour
             return;
         }
 
-        int danceIndex = Random.Range(0, 4); // 0?ì„œ 3 ?¬ì´???œë¤ ?¸ë±??? íƒ
+        int danceIndex = Random.Range(0, 5); // 0~4 (Group Dance includes Crazy)
         if (isStart)
         {
             currentState = ActionState.GroupDance;
