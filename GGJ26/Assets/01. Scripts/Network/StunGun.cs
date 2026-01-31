@@ -144,6 +144,7 @@ public class StunGun : NetworkBehaviour
 
         target.RpcPlayDeadAnimation();
         target.RpcRequestEliminate();
+        target.ApplyEliminatedStateImmediate();
     }
 
     private void SpawnHitEffect(Vector3 position, Vector3 normal)

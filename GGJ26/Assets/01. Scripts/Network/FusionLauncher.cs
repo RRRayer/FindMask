@@ -44,6 +44,9 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
     private readonly Dictionary<PlayerRef, Vector3> playerSpawnPositions = new Dictionary<PlayerRef, Vector3>();
     private readonly List<NetworkObject> spawnedNpcs = new List<NetworkObject>();
     private bool spawnLayoutBuilt;
+    private bool hasSpawnBounds;
+    private Vector3 spawnBoundsCenter;
+    private Vector3 spawnBoundsSize;
 
     public event Action<bool> MatchmakingStateChanged;
     public bool IsMatchmaking => isMatchmaking;
@@ -607,6 +610,12 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
             return;
         }
 
+        ResolveSpawnArea();
+        if (spawnArea == null && hasSpawnBounds == false)
+        {
+            Debug.LogWarning("[FusionLauncher] SpawnArea not found. Using fallback radius.", this);
+        }
+
         int playerCount = runner.ActivePlayers.Count();
         int npcCount = Mathf.Max(0, npcsPerColor) * 3;
         int totalCount = playerCount + npcCount;
@@ -617,7 +626,7 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         var random = new System.Random(GetSpawnSeed());
         var positions = new List<Vector3>(totalCount);
-        if (spawnArea != null && useGridSampling)
+        if ((spawnArea != null || hasSpawnBounds) && useGridSampling)
         {
             positions.AddRange(GenerateGridPositions(totalCount, random));
         }
@@ -666,7 +675,15 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
         }
 
         spawnLayoutBuilt = true;
-        Debug.Log($"[FusionLauncher] Spawn layout built: total={totalCount} players={playerCount} npcs={npcCount} positions={positions.Count}");
+        if (spawnArea != null)
+        {
+            Debug.Log($"[FusionLauncher] SpawnArea bounds size={spawnArea.bounds.size} center={spawnArea.bounds.center}", this);
+        }
+        else if (hasSpawnBounds)
+        {
+            Debug.Log($"[FusionLauncher] SpawnBounds size={spawnBoundsSize} center={spawnBoundsCenter}", this);
+        }
+        Debug.Log($"[FusionLauncher] Spawn layout built: total={totalCount} players={playerCount} npcs={npcCount} positions={positions.Count}", this);
     }
 
     private void SpawnNpcs(List<Vector3> positions, int startIndex)
@@ -720,6 +737,21 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
             return new Vector3(x, bounds.center.y, z);
         }
 
+        if (hasSpawnBounds)
+        {
+            var bounds = new Bounds(spawnBoundsCenter, spawnBoundsSize);
+            float x = (float)(bounds.min.x + (bounds.size.x * random.NextDouble()));
+            float z = (float)(bounds.min.z + (bounds.size.z * random.NextDouble()));
+            float y = bounds.max.y + 5f;
+            Vector3 origin = new Vector3(x, y, z);
+            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 1000f, spawnGroundLayers, QueryTriggerInteraction.Ignore))
+            {
+                return hit.point;
+            }
+
+            return new Vector3(x, bounds.center.y, z);
+        }
+
         float angle = (float)random.NextDouble() * Mathf.PI * 2f;
         float radius = (float)random.NextDouble() * fallbackSpawnRadius;
         return new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
@@ -728,12 +760,14 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
     private List<Vector3> GenerateGridPositions(int count, System.Random random)
     {
         var results = new List<Vector3>(count);
-        if (spawnArea == null || count <= 0)
+        if ((spawnArea == null && hasSpawnBounds == false) || count <= 0)
         {
             return results;
         }
 
-        var bounds = spawnArea.bounds;
+        var bounds = spawnArea != null
+            ? spawnArea.bounds
+            : new Bounds(spawnBoundsCenter, spawnBoundsSize);
         float sizeX = bounds.size.x;
         float sizeZ = bounds.size.z;
         float aspect = sizeX / Mathf.Max(0.001f, sizeZ);
@@ -798,10 +832,39 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
         var spawnObject = GameObject.FindGameObjectWithTag(spawnAreaTag);
         if (spawnObject == null)
         {
+            spawnObject = GameObject.Find("SpawnArea");
+        }
+
+        if (spawnObject == null)
+        {
             return;
         }
 
         spawnArea = spawnObject.GetComponent<BoxCollider>();
+
+        if (spawnArea == null)
+        {
+            BuildBoundsFromSpawnPoints();
+        }
+    }
+
+    private void BuildBoundsFromSpawnPoints()
+    {
+        if (spawnPoints == null || spawnPoints.Count == 0)
+        {
+            return;
+        }
+
+        Bounds bounds = new Bounds(spawnPoints[0].transform.position, Vector3.zero);
+        for (int i = 1; i < spawnPoints.Count; i++)
+        {
+            bounds.Encapsulate(spawnPoints[i].transform.position);
+        }
+
+        bounds.Expand(Mathf.Max(1f, minSpawnDistance));
+        spawnBoundsCenter = bounds.center;
+        spawnBoundsSize = bounds.size;
+        hasSpawnBounds = true;
     }
 
     private int GetSpawnSeed()

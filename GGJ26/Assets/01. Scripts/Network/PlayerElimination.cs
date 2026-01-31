@@ -83,6 +83,11 @@ public class PlayerElimination : NetworkBehaviour
         IsEliminated = true;
     }
 
+    public void ApplyEliminatedStateImmediate()
+    {
+        ApplyEliminatedState();
+    }
+
     [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
     public void RpcPlayDeadAnimation()
     {
