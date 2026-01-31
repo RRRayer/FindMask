@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
-using UnityEngine.Rendering.Universal; // For Light2D
 
 public class DiscoBall : MonoBehaviour
 {
