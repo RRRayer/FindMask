@@ -8,7 +8,7 @@ public class UICanvasManager : MonoBehaviour
     public void EnableSeekerCanvas()
     {
         if (seekerCanvas != null) seekerCanvas.enabled = true;
-        if (hiderCanvas != null) hiderCanvas.enabled = false;
+        if (hiderCanvas != null) hiderCanvas.enabled = true;
         Debug.Log("Seeker canvas enabled");
     }
 

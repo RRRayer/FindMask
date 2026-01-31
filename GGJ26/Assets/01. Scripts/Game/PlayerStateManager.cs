@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,6 +7,8 @@ public class PlayerStateManager : MonoBehaviour
     private readonly Dictionary<string, PlayerState> players = new Dictionary<string, PlayerState>();
     private string localPlayerId;
 
+    public event Action<PlayerState> OnPlayerStateChanged;
+
     public void RegisterPlayer(string playerId, bool isSeeker)
     {
         if (string.IsNullOrEmpty(playerId))
@@ -13,18 +16,31 @@ public class PlayerStateManager : MonoBehaviour
             return;
         }
 
+        PlayerState playerState;
         if (players.ContainsKey(playerId))
         {
-            players[playerId].IsSeeker = isSeeker;
-            return;
+            playerState = players[playerId];
+            playerState.IsSeeker = isSeeker;
+            Debug.Log($"[PlayerStateManager] Updating player {playerId}: IsSeeker = {isSeeker}");
         }
-
-        players[playerId] = new PlayerState(playerId, isSeeker);
+        else
+        {
+            playerState = new PlayerState(playerId, isSeeker);
+            players[playerId] = playerState;
+            Debug.Log($"[PlayerStateManager] Registering new player {playerId}: IsSeeker = {isSeeker}");
+        }
+        
+        OnPlayerStateChanged?.Invoke(playerState);
     }
 
     public void SetLocalPlayer(string playerId)
     {
         localPlayerId = playerId;
+        // When the local player is set, we might already have their state, so invoke the event.
+        if (players.TryGetValue(playerId, out var playerState))
+        {
+            OnPlayerStateChanged?.Invoke(playerState);
+        }
     }
 
     public void MarkDead(string playerId)
@@ -32,6 +48,7 @@ public class PlayerStateManager : MonoBehaviour
         if (TryGetPlayer(playerId, out var state))
         {
             state.IsDead = true;
+            OnPlayerStateChanged?.Invoke(state);
         }
     }
 

@@ -253,9 +253,8 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
             var seeker = GetDeterministicSeeker();
             bool isSeeker = player == seeker;
             playerStateManager.RegisterPlayer(player.RawEncoded.ToString(), isSeeker);
+            Debug.Log($"[FusionLauncher] TrySpawnLocalPlayer: Player {player.RawEncoded} determined as seeker: {isSeeker}.");
         }
-
-        RegisterPlayerState(player);
     }
 
     private NetworkObject GetPrefabForPlayer(PlayerRef player)
