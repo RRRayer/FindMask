@@ -213,6 +213,12 @@ public class GameManager : NetworkBehaviour
 
     private void Update()
     {
+        if (currentGameState == GameState.Ending)
+        {
+            UnlockCursorForResult();
+            return;
+        }
+
         if (hasEnded || currentGameState != GameState.Gameplay)
         {
             return;
@@ -370,6 +376,7 @@ public class GameManager : NetworkBehaviour
         }
         
         UpdateGameState(GameState.Ending);
+        UnlockCursorForResult();
 
         bool localWin = seekerWin;
         if (playerStateManager != null && playerStateManager.TryGetLocalPlayer(out var localState))
@@ -384,6 +391,24 @@ public class GameManager : NetworkBehaviour
         onGameResult?.RaiseEvent(result);
         Debug.Log("Game Ended. Seeker Win: " + seekerWin + ", Local Player Win: " + localWin);
         onGameEnded?.RaiseEvent();
+    }
+
+    private void UnlockCursorForResult()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        var spectator = FindFirstObjectByType<SpectatorController>();
+        if (spectator != null)
+        {
+            spectator.enabled = false;
+        }
+
+        var inputs = FindFirstObjectByType<StarterAssets.StarterAssetsInputs>();
+        if (inputs != null)
+        {
+            inputs.ForceCursorUnlocked();
+        }
     }
 
     public override void Spawned()

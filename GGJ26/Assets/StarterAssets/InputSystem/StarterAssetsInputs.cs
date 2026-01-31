@@ -109,15 +109,28 @@ namespace StarterAssets
 			dance4 = false;
 		}
 
-		private void OnApplicationFocus(bool hasFocus)
+	private void OnApplicationFocus(bool hasFocus)
+	{
+		if (hasFocus == false)
 		{
-			SetCursorState(cursorLocked);
+			return;
 		}
 
-		private void SetCursorState(bool newState)
-		{
-			Cursor.lockState = newState ? CursorLockMode.Locked : CursorLockMode.None;
-		}
+		SetCursorState(cursorLocked);
+	}
+
+	private void SetCursorState(bool newState)
+	{
+		Cursor.lockState = newState ? CursorLockMode.Locked : CursorLockMode.None;
+	}
+
+	public void ForceCursorUnlocked()
+	{
+		cursorLocked = false;
+		cursorInputForLook = false;
+		Cursor.lockState = CursorLockMode.None;
+		Cursor.visible = true;
+	}
 	}
 	
 }
