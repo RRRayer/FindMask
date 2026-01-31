@@ -225,23 +225,20 @@ public class NPCController : NetworkBehaviour
     public void StartDance(int danceIndex)
     {
         SetMovement(Vector3.zero, false);
-        if (animator == null)
-        {
-            return;
-        }
 
-        animator.SetInteger(animIDDanceIndex, danceIndex);
-        animator.SetTrigger(animIDStartDance);
+        // Reset the other trigger to ensure a clean transition
+        _animator.ResetTrigger(_animIDStopDance);
+
+        _animator.SetInteger(_animIDDanceIndex, danceIndex);
+        _animator.SetTrigger(_animIDStartDance);
     }
 
     public void StopDance()
     {
-        if (animator == null)
-        {
-            return;
-        }
-
-        animator.SetTrigger(animIDStopDance);
+        // Reset the other trigger to ensure a clean transition
+        _animator.ResetTrigger(_animIDStartDance);
+        
+        _animator.SetTrigger(_animIDStopDance);
     }
 
     #endregion

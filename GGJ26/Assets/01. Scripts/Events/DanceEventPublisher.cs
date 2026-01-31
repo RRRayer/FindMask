@@ -63,8 +63,8 @@ public class DanceEventPublisher : NetworkBehaviour
         while (true)
         {
             // 1. 다음 댄스 정보를 미리 결정하고 UI에 알립니다.
-            int danceIndex = Random.Range(1, 5);
-            RpcAnnounceNextDance(colorIndex, danceIndex);
+            int danceIndex = Random.Range(0, 4);
+            OnNextDanceAnnounced?.Invoke(new DanceInfo { DanceIndex = danceIndex, Color = color });
 
             // 2. 댄스가 실제로 시작하기 전까지 대기합니다. 이 시간이 UI 큐에 표시되는 시간이 됩니다.
             //    (여기서는 고정된 짧은 시간을 주거나, 기존처럼 랜덤값을 사용할 수 있습니다. 일단 3초로 고정하겠습니다.)
