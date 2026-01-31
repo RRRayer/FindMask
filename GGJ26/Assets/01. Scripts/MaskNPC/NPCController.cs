@@ -395,7 +395,7 @@ public class NPCController : NetworkBehaviour
             TriggerJump();
         }
 
-        if (agent != null)
+        if (agent != null && agent.enabled)
         {
             agent.isStopped = NetIsStopped;
             if (NetHasDestination)
@@ -405,7 +405,7 @@ public class NPCController : NetworkBehaviour
             agent.nextPosition = transform.position;
         }
 
-        if (agent != null && agent.hasPath && agent.isStopped == false)
+        if (agent != null && agent.enabled && agent.hasPath && agent.isStopped == false)
         {
             SetMovement(agent.desiredVelocity.normalized, NetIsSprinting);
         }
@@ -431,6 +431,38 @@ public class NPCController : NetworkBehaviour
     public override void Spawned()
     {
         hasSpawned = true;
+        ConfigureNavMeshAgent();
+    }
+
+    private void ConfigureNavMeshAgent()
+    {
+        if (agent == null)
+        {
+            return;
+        }
+
+        bool isStateAuthority = Object != null && Object.HasStateAuthority;
+        agent.updatePosition = false;
+        agent.updateRotation = false;
+        agent.enabled = isStateAuthority;
+
+        if (isStateAuthority == false)
+        {
+            return;
+        }
+
+        if (agent.isOnNavMesh == false)
+        {
+            UnityEngine.AI.NavMeshHit hit;
+            if (UnityEngine.AI.NavMesh.SamplePosition(transform.position, out hit, 5f, UnityEngine.AI.NavMesh.AllAreas))
+            {
+                agent.Warp(hit.position);
+            }
+        }
+        else
+        {
+            agent.Warp(transform.position);
+        }
     }
 
     private void GroundedCheck()
