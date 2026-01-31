@@ -126,11 +126,6 @@ public class NPCController : NetworkBehaviour
             return;
         }
 
-        if (Object != null && Object.HasStateAuthority == false)
-        {
-            return;
-        }
-
         if (IsDead)
         {
             if (agent != null)
