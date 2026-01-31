@@ -570,8 +570,8 @@ MonoBehaviour:
   DanceIndexChannel: {fileID: 11400000, guid: bff2d00913296dc43a8c646622157e62, type: 2}
   stoppingDistance: 1.5
   WalkDuration:
-  - 2
-  - 3
+  - 4
+  - 5
   RunDuration:
   - 2
   - 3

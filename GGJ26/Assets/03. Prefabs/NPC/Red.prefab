@@ -1079,11 +1079,11 @@ MonoBehaviour:
   DanceIndexChannel: {fileID: 11400000, guid: 455fcfc713ebbea40a2355c6b9a7581e, type: 2}
   stoppingDistance: 1.5
   RunDuration:
-  - 4
+  - 2
   - 5
   IdleDuration:
   - 2
-  - 4
+  - 5
 --- !u!114 &2100474120000197621
 MonoBehaviour:
   m_ObjectHideFlags: 0
