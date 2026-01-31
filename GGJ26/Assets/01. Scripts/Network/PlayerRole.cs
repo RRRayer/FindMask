@@ -10,6 +10,7 @@ public class PlayerRole : NetworkBehaviour
     [Networked] private NetworkBool MaskAssigned { get; set; }
     [Networked] private int MaskSeed { get; set; }
 
+
     private PlayerStateManager playerStateManager;
     private bool lastIsSeeker;
     private bool lastRoleAssigned;
