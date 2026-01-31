@@ -82,6 +82,20 @@ public class DiscoBall : MonoBehaviour
             }
         }
 
+        // Initially disable all lights
+        if (allSpotlights != null)
+        {
+            foreach (var light in allSpotlights)
+            {
+                if(light != null)
+                    light.enabled = false;
+            }
+        }
+        if (centralPointLight != null)
+        {
+            centralPointLight.enabled = false;
+        }
+
         discoObject.SetActive(false);
     }
 
