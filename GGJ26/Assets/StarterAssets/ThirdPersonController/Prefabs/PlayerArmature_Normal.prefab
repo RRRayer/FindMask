@@ -3047,7 +3047,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7012012439338145738, guid: 8b4f2f127b410114ababa59ecdf2d181, type: 3}
       propertyPath: m_Name
-      value: Butterfly_Red
+      value: Mask_Red
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3082,7 +3082,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 401003345071872972, guid: 289a5e3f1d6bc334699d748adb890fb8, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 0.109
       objectReference: {fileID: 0}
     - target: {fileID: 401003345071872972, guid: 289a5e3f1d6bc334699d748adb890fb8, type: 3}
       propertyPath: m_LocalRotation.w
@@ -3114,7 +3114,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7012012439338145738, guid: 289a5e3f1d6bc334699d748adb890fb8, type: 3}
       propertyPath: m_Name
-      value: Butterfly_Green
+      value: Mask_Green
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3144,7 +3144,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 401003345071872972, guid: 498f40754c8b5df4ab19619b930ee16d, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 0.109
       objectReference: {fileID: 0}
     - target: {fileID: 401003345071872972, guid: 498f40754c8b5df4ab19619b930ee16d, type: 3}
       propertyPath: m_LocalRotation.w
@@ -3176,7 +3176,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7012012439338145738, guid: 498f40754c8b5df4ab19619b930ee16d, type: 3}
       propertyPath: m_Name
-      value: Butterfly_Blue
+      value: Mask_Blue
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
