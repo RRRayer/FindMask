@@ -389,7 +389,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CanvasDead: {fileID: 106689028}
-  notDeadCanvas: []
+  notDeadCanvas:
+  - {fileID: 1227170226}
+  - {fileID: 1227170227}
 --- !u!1 &123334091
 GameObject:
   m_ObjectHideFlags: 0
@@ -3055,7 +3057,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1378872440324834343, guid: 84a3ea2ba79765b4d9c27f1c4d411437, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 7.071045
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1399846313970501880, guid: 84a3ea2ba79765b4d9c27f1c4d411437, type: 3}
       propertyPath: m_Color.b
@@ -3742,7 +3744,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1555088081102915513, guid: 84a3ea2ba79765b4d9c27f1c4d411437, type: 3}
       insertIndex: 0
       addedObject: {fileID: 10632982}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6563334754708612028, guid: 84a3ea2ba79765b4d9c27f1c4d411437, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1227170228}
   m_SourcePrefab: {fileID: 100100000, guid: 84a3ea2ba79765b4d9c27f1c4d411437, type: 3}
 --- !u!114 &1227170221 stripped
 MonoBehaviour:
@@ -3776,6 +3781,35 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1311254475913859141, guid: 84a3ea2ba79765b4d9c27f1c4d411437, type: 3}
   m_PrefabInstance: {fileID: 1227170220}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1227170225 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6563334754708612028, guid: 84a3ea2ba79765b4d9c27f1c4d411437, type: 3}
+  m_PrefabInstance: {fileID: 1227170220}
+  m_PrefabAsset: {fileID: 0}
+--- !u!223 &1227170226 stripped
+Canvas:
+  m_CorrespondingSourceObject: {fileID: 8390307014694973722, guid: 84a3ea2ba79765b4d9c27f1c4d411437, type: 3}
+  m_PrefabInstance: {fileID: 1227170220}
+  m_PrefabAsset: {fileID: 0}
+--- !u!223 &1227170227 stripped
+Canvas:
+  m_CorrespondingSourceObject: {fileID: 8011492201310015309, guid: 84a3ea2ba79765b4d9c27f1c4d411437, type: 3}
+  m_PrefabInstance: {fileID: 1227170220}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1227170228
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1227170225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa4b40df15a33e947b6a205f82ca1eec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  seekerCanvas: {fileID: 1227170227}
+  hiderCanvas: {fileID: 1227170226}
 --- !u!1 &1374895495
 GameObject:
   m_ObjectHideFlags: 0
@@ -5262,7 +5296,7 @@ PrefabInstance:
     - target: {fileID: 5635472117089175894, guid: fe9646060860870468e10550124355b1, type: 3}
       propertyPath: uiCanvasManager
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1227170228}
     - target: {fileID: 5635472117089175894, guid: fe9646060860870468e10550124355b1, type: 3}
       propertyPath: totalGameSeconds
       value: 180

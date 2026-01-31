@@ -112,10 +112,12 @@ public class GameManager : NetworkBehaviour
                     Debug.Log($"[GameManager] OnPlayerStateChanged: Local player role is now Seeker = {updatedState.IsSeeker}. Updating UI.");
                     if (updatedState.IsSeeker)
                     {
+                        Debug.Log("enableseeker");
                         uiCanvasManager.EnableSeekerCanvas();
                     }
                     else
                     {
+                        Debug.Log("enablehider");
                         uiCanvasManager.EnableHiderCanvas();
                     }
                 }
