@@ -1481,7 +1481,7 @@ MonoBehaviour:
   cameraObjectName: PlayerFollowCamera
   bindAllVirtualCameras: 0
   cameraTarget: {fileID: 0}
-  topClamp: 70
+  topClamp: 85
   bottomClamp: -30
   cameraAngleOverride: 0
   lockCameraPosition: 0

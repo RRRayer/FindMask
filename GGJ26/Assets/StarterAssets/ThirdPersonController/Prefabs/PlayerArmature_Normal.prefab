@@ -224,6 +224,8 @@ MonoBehaviour:
   crosshairColor: {r: 1, g: 1, b: 1, a: 1}
   hitEffectPrefab: {fileID: 0}
   hitEffectLifetime: 1.5
+  shootTransform: {fileID: 0}
+  shootVfx: {fileID: 0}
   fogEffectPrefab: {fileID: 0}
   sfxEventChannel: {fileID: 11400000, guid: 06d6e7e2f1efcf34091297cc2951787b, type: 2}
   sfxConfiguration: {fileID: 11400000, guid: 854501da1c4d88b498813056f7cc098d, type: 2}
@@ -592,7 +594,7 @@ MonoBehaviour:
   cameraObjectName: PlayerFollowCamera
   bindAllVirtualCameras: 0
   cameraTarget: {fileID: 0}
-  topClamp: 70
+  topClamp: 85
   bottomClamp: -30
   cameraAngleOverride: 0
   lockCameraPosition: 0

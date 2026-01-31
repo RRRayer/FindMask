@@ -29,6 +29,9 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
     [SerializeField] private LayerMask spawnGroundLayers = -1;
     [SerializeField] private float minSpawnDistance = 1.5f;
     [SerializeField] private int spawnSeed = 1337;
+    [SerializeField] private bool useGridSampling = true;
+    [Range(0f, 0.45f)]
+    [SerializeField] private float gridJitter = 0.35f;
 
     [Header("NPC Spawning")]
     [SerializeField] private NetworkObject redNpcPrefab;
@@ -44,6 +47,7 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     public event Action<bool> MatchmakingStateChanged;
     public bool IsMatchmaking => isMatchmaking;
+    public int MaxPlayers => maxPlayers;
 
     private NetworkRunner runner;
     private GameObject runnerObject;
@@ -613,26 +617,34 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
         var random = new System.Random(GetSpawnSeed());
         var positions = new List<Vector3>(totalCount);
-        int attempts = 0;
-        int maxAttempts = totalCount * 200;
-        float minDistSqr = minSpawnDistance * minSpawnDistance;
-
-        while (positions.Count < totalCount && attempts < maxAttempts)
+        if (spawnArea != null && useGridSampling)
         {
-            attempts++;
-            Vector3 candidate = SampleSpawnPosition(random);
-            bool ok = true;
-            for (int i = 0; i < positions.Count; i++)
+            positions.AddRange(GenerateGridPositions(totalCount, random));
+        }
+
+        if (positions.Count < totalCount)
+        {
+            int attempts = 0;
+            int maxAttempts = totalCount * 200;
+            float minDistSqr = minSpawnDistance * minSpawnDistance;
+
+            while (positions.Count < totalCount && attempts < maxAttempts)
             {
-                if ((positions[i] - candidate).sqrMagnitude < minDistSqr)
+                attempts++;
+                Vector3 candidate = SampleSpawnPosition(random);
+                bool ok = true;
+                for (int i = 0; i < positions.Count; i++)
                 {
-                    ok = false;
-                    break;
+                    if ((positions[i] - candidate).sqrMagnitude < minDistSqr)
+                    {
+                        ok = false;
+                        break;
+                    }
                 }
-            }
-            if (ok)
-            {
-                positions.Add(candidate);
+                if (ok)
+                {
+                    positions.Add(candidate);
+                }
             }
         }
 
@@ -712,6 +724,78 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
         float angle = (float)random.NextDouble() * Mathf.PI * 2f;
         float radius = (float)random.NextDouble() * fallbackSpawnRadius;
         return new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
+    }
+
+    private List<Vector3> GenerateGridPositions(int count, System.Random random)
+    {
+        var results = new List<Vector3>(count);
+        if (spawnArea == null || count <= 0)
+        {
+            return results;
+        }
+
+        var bounds = spawnArea.bounds;
+        float sizeX = bounds.size.x;
+        float sizeZ = bounds.size.z;
+        float aspect = sizeX / Mathf.Max(0.001f, sizeZ);
+        int cellsX = Mathf.Max(1, Mathf.CeilToInt(Mathf.Sqrt(count * aspect)));
+        int cellsZ = Mathf.Max(1, Mathf.CeilToInt((float)count / cellsX));
+
+        float cellSizeX = sizeX / cellsX;
+        float cellSizeZ = sizeZ / cellsZ;
+        float jitterX = cellSizeX * Mathf.Clamp01(gridJitter);
+        float jitterZ = cellSizeZ * Mathf.Clamp01(gridJitter);
+
+        var candidates = new List<Vector3>(cellsX * cellsZ);
+        for (int z = 0; z < cellsZ; z++)
+        {
+            for (int x = 0; x < cellsX; x++)
+            {
+                float cx = bounds.min.x + (x + 0.5f) * cellSizeX;
+                float cz = bounds.min.z + (z + 0.5f) * cellSizeZ;
+                float jx = (float)(random.NextDouble() * 2 - 1) * jitterX;
+                float jz = (float)(random.NextDouble() * 2 - 1) * jitterZ;
+                Vector3 origin = new Vector3(cx + jx, bounds.max.y + 5f, cz + jz);
+                if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 1000f, spawnGroundLayers, QueryTriggerInteraction.Ignore))
+                {
+                    candidates.Add(hit.point);
+                }
+                else
+                {
+                    candidates.Add(new Vector3(cx + jx, bounds.center.y, cz + jz));
+                }
+            }
+        }
+
+        // Shuffle candidates
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            int swap = random.Next(i, candidates.Count);
+            var temp = candidates[i];
+            candidates[i] = candidates[swap];
+            candidates[swap] = temp;
+        }
+
+        float minDistSqr = minSpawnDistance * minSpawnDistance;
+        for (int i = 0; i < candidates.Count && results.Count < count; i++)
+        {
+            Vector3 candidate = candidates[i];
+            bool ok = true;
+            for (int j = 0; j < results.Count; j++)
+            {
+                if ((results[j] - candidate).sqrMagnitude < minDistSqr)
+                {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok)
+            {
+                results.Add(candidate);
+            }
+        }
+
+        return results;
     }
 
     private void ResolveSpawnArea()
