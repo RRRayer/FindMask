@@ -56,16 +56,13 @@ public class GameManager : NetworkBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
+
+        Instance = this;
 
         if (saveLoadSystem != null)
         {
@@ -222,6 +219,11 @@ public class GameManager : NetworkBehaviour
         }
 
         remainingSeconds = hasSpawned ? NetRemainingSeconds : totalGameSeconds;
+
+        if (Time.frameCount % 120 == 0)
+        {
+            Debug.Log($"[Timer] spawned={hasSpawned} stateAuth={(Object != null && Object.HasStateAuthority)} state={currentGameState} runner={(Runner != null && Runner.IsRunning)} remaining={remainingSeconds:0.00}");
+        }
 
         if (txtTimer != null)
         {
@@ -399,11 +401,19 @@ public class GameManager : NetworkBehaviour
     {
         if (Object == null || Object.HasStateAuthority == false)
         {
+            if (Time.frameCount % 120 == 0)
+            {
+                Debug.Log($"[Timer] FixedUpdateNetwork skip: hasObject={(Object != null)} stateAuth={(Object != null && Object.HasStateAuthority)}");
+            }
             return;
         }
 
         if (hasEnded || currentGameState != GameState.Gameplay)
         {
+            if (Time.frameCount % 120 == 0)
+            {
+                Debug.Log($"[Timer] FixedUpdateNetwork skip: hasEnded={hasEnded} state={currentGameState}");
+            }
             return;
         }
 
@@ -414,6 +424,10 @@ public class GameManager : NetworkBehaviour
             {
                 NetRemainingSeconds = totalGameSeconds;
                 NetStartTime = Runner.SimulationTime;
+                if (Time.frameCount % 120 == 0)
+                {
+                    Debug.Log("[Timer] Waiting for players. Timer not started.");
+                }
                 return;
             }
 
@@ -431,19 +445,20 @@ public class GameManager : NetworkBehaviour
             return false;
         }
 
-        int maxPlayers = Runner.SessionInfo.IsValid ? Runner.SessionInfo.MaxPlayers : 0;
-        if (maxPlayers <= 1)
-        {
-            return true;
-        }
-
         int activeCount = 0;
         foreach (var player in Runner.ActivePlayers)
         {
             activeCount++;
         }
 
-        return activeCount >= maxPlayers;
+        int expectedPlayers = 0;
+        var launcher = FindFirstObjectByType<FusionLauncher>();
+        if (launcher != null)
+        {
+            expectedPlayers = launcher.MaxPlayers;
+        }
+
+        return activeCount > 0;
     }
 
     private static GameObject FindLocalPlayer(GameObject[] players)
