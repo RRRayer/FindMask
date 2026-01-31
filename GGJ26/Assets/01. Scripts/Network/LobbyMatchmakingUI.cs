@@ -11,7 +11,7 @@ public class LobbyMatchmakingUI : MonoBehaviour
     [SerializeField] private UIGenericButton startButton;
     [SerializeField] private bool allowKeyboardStart = true;
     [SerializeField] private Key startKey = Key.Enter;
-    [SerializeField] private string matchmakingMessage = "매칭 중...";
+    [SerializeField] private string matchmakingMessage = "Matching...";
 
     [SerializeField] private TMP_InputField roomName;
     [SerializeField] private TMP_Dropdown maxPlayerCount;
@@ -153,7 +153,7 @@ public class LobbyMatchmakingUI : MonoBehaviour
         var canvas = CreateCanvas("MatchmakingCanvas");
         popupRoot = CreatePanel(canvas.transform, "MatchmakingPopup", new Vector2(480f, 220f));
         popupText = CreateText(popupRoot.transform, "MatchmakingText", matchmakingMessage);
-        cancelButton = CreateButton(popupRoot.transform, "CancelButton", "매칭 취소");
+        cancelButton = CreateButton(popupRoot.transform, "CancelButton", "Cancel");
     }
 
     private void EnsureEventSystem()

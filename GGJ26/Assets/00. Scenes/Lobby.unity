@@ -1116,7 +1116,7 @@ MonoBehaviour:
   startButton: {fileID: 492085672}
   allowKeyboardStart: 1
   startKey: 13
-  matchmakingMessage: "\uB9E4\uCE6D \uC911..."
+  matchmakingMessage: Matching...
   roomName: {fileID: 785938624}
   maxPlayerCount: {fileID: 725782017}
   popupRoot: {fileID: 0}
