@@ -34,10 +34,10 @@ public class LobbyMatchmakingUI : MonoBehaviour
             startButton = FindFirstObjectByType<UIGenericButton>();
         }
 
-        if (popupRoot == null)
-        {
-            BuildPopup();
-        }
+        // if (popupRoot == null)
+        // {
+        //     BuildPopup();
+        // }
 
         if (popupRoot != null)
         {
@@ -154,6 +154,7 @@ public class LobbyMatchmakingUI : MonoBehaviour
         {
             popupRoot.SetActive(isMatchmaking);
         }
+
     }
 
     private void BuildPopup()
