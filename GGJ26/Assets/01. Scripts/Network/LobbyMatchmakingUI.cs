@@ -9,6 +9,7 @@ public class LobbyMatchmakingUI : MonoBehaviour
 {
     [SerializeField] private FusionLauncher launcher;
     [SerializeField] private UIGenericButton startButton;
+    [SerializeField] private UIGenericButton exitButton;
     [SerializeField] private bool allowKeyboardStart = true;
     [SerializeField] private Key startKey = Key.Enter;
     [SerializeField] private string matchmakingMessage = "Matching...";
@@ -104,6 +105,15 @@ public class LobbyMatchmakingUI : MonoBehaviour
         {
             StartMatchmaking();
         }
+    }
+
+    public void onBtnExit()
+    {
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+        #else
+        Application.Quit();
+        #endif
     }
 
     private void StartMatchmaking()
