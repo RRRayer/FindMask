@@ -881,7 +881,7 @@ GameObject:
   - component: {fileID: 691463538723954156}
   - component: {fileID: 2100474120000197621}
   - component: {fileID: 6977953616931262847}
-  - component: {fileID: -690496154153150223}
+  - component: {fileID: 3755100232350581314}
   m_Layer: 6
   m_Name: Red
   m_TagString: Player
@@ -1024,7 +1024,7 @@ MonoBehaviour:
   GroundLayers:
     serializedVersion: 2
     m_Bits: 1
-  debugNpc: 1
+  debugNpc: 0
   debugInterval: 1
   maxTeleportDistance: 8
   _IsDead:
@@ -1103,7 +1103,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 7632096912513734925}
-  - {fileID: -690496154153150223}
+  - {fileID: 3755100232350581314}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &6977953616931262847
 MonoBehaviour:
@@ -1119,7 +1119,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speedParam: Speed
   motionSpeedParam: MotionSpeed
---- !u!114 &-690496154153150223
+--- !u!114 &3755100232350581314
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -56,12 +56,7 @@ public class NPCController : NetworkBehaviour
     [Tooltip("What layers the character uses as ground")]
     public LayerMask GroundLayers;
 
-    [Header("Debug")]
-    [SerializeField] private bool debugNpc = false;
-    [SerializeField] private float debugInterval = 1f;
-    [SerializeField] private float maxTeleportDistance = 8f;
-    private Vector3 lastTickPosition;
-    private bool hasLastTickPosition;
+    
     // movement
     private float speed;
     private float animationBlend;
@@ -93,7 +88,7 @@ public class NPCController : NetworkBehaviour
     private CharacterController controller;
     private UnityEngine.AI.NavMeshAgent agent;
     private BaseNPC baseNpc;
-    private float debugTimer;
+    
     private int lastJumpCounter;
     private Vector3 lastValidPosition;
     private bool hasValidPosition;
@@ -163,11 +158,6 @@ public class NPCController : NetworkBehaviour
         }
 
         float deltaTime = GetDeltaTime();
-        if (debugNpc)
-        {
-            UpdateDebugTimer(deltaTime);
-        }
-
         // Only the state authority should drive movement/physics.
         if (Object == null || Object.HasStateAuthority == false)
         {
@@ -195,7 +185,6 @@ public class NPCController : NetworkBehaviour
         GroundedCheck();
         Move(deltaTime);
 
-        TrackTickTeleport(deltaTime);
 
         if (Object != null && Object.HasStateAuthority)
         {
@@ -206,19 +195,7 @@ public class NPCController : NetworkBehaviour
         }
     }
 
-    private void UpdateDebugTimer(float deltaTime)
-    {
-        debugTimer += deltaTime;
-        if (debugTimer < debugInterval)
-        {
-            return;
-        }
-
-        debugTimer = 0f;
-        bool hasState = Object != null && Object.HasStateAuthority;
-        bool ccEnabled = controller != null && controller.enabled;
-        Debug.Log($"[NPCController] state={hasState} grounded={Grounded} vVel={verticalVelocity:F2} pos={transform.position} cc={ccEnabled} agentEnabled={(agent != null && agent.enabled)} onNavMesh={(agent != null && agent.isOnNavMesh)} hasPath={(agent != null && agent.hasPath)} isStopped={(agent != null && agent.isStopped)} netDest={NetDestination} hasDest={NetHasDestination} tick={(Runner != null ? Runner.Tick : 0)}", this);
-    }
+    
 
     private void LateUpdate()
     {
@@ -227,16 +204,14 @@ public class NPCController : NetworkBehaviour
             return;
         }
 
-        if (IsDead == false || snappedToGroundOnDeath)
+        if (IsDead && snappedToGroundOnDeath == false)
         {
-            return;
-        }
-
-        Vector3 origin = transform.position + Vector3.up * 1f;
-        if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 20f, GroundLayers, QueryTriggerInteraction.Ignore))
-        {
-            transform.position = hit.point;
-            snappedToGroundOnDeath = true;
+            Vector3 origin = transform.position + Vector3.up * 1f;
+            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 20f, GroundLayers, QueryTriggerInteraction.Ignore))
+            {
+                transform.position = hit.point;
+                snappedToGroundOnDeath = true;
+            }
         }
     }
 
@@ -299,10 +274,6 @@ public class NPCController : NetworkBehaviour
 
         NetDestination = destination;
         NetHasDestination = true;
-        if (debugNpc)
-        {
-            Debug.Log($"[NPCController][SetDest] dest={destination} sampled={(agent != null ? agent.destination : destination)}", this);
-        }
         if (agent != null)
         {
             agent.SetDestination(destination);
@@ -481,10 +452,6 @@ public class NPCController : NetworkBehaviour
 
         if (CanUseAgent && agent.hasPath && agent.isStopped == false)
         {
-            if (NetHasDestination == false && debugNpc)
-            {
-                Debug.LogWarning($"[NPCController][PathWithoutNetDest] pos={transform.position} dest={agent.destination} remaining={agent.remainingDistance:0.00}", this);
-            }
             SetMovement(agent.desiredVelocity.normalized, NetIsSprinting);
         }
         else
@@ -642,13 +609,10 @@ public class NPCController : NetworkBehaviour
         float targetSpeed = isSprinting ? SprintSpeed : MoveSpeed;
         if (moveDirection == Vector3.zero) targetSpeed = 0.0f;
 
-        float currentHorizontalSpeed = new Vector3(controller.velocity.x, 0.0f, controller.velocity.z).magnitude;
-        float maxAllowedSpeed = SprintSpeed * 1.5f;
-        if (currentHorizontalSpeed > maxAllowedSpeed || float.IsNaN(currentHorizontalSpeed))
+        float currentHorizontalSpeed = speed;
+        if (CanUseAgent)
         {
-            currentHorizontalSpeed = targetSpeed;
-            speed = targetSpeed;
-            animationBlend = targetSpeed;
+            currentHorizontalSpeed = agent.desiredVelocity.magnitude;
         }
         float speedOffset = 0.1f;
         float inputMagnitude = moveDirection.magnitude;
@@ -677,19 +641,7 @@ public class NPCController : NetworkBehaviour
 
         Vector3 targetDirection = Quaternion.Euler(0.0f, targetRotation, 0.0f) * Vector3.forward;
 
-        Vector3 beforeMove = transform.position;
-        if (speed > maxAllowedSpeed || float.IsNaN(speed))
-        {
-            speed = targetSpeed;
-        }
         controller.Move(targetDirection.normalized * (speed * deltaTime) + new Vector3(0.0f, verticalVelocity, 0.0f) * deltaTime);
-        Vector3 afterMove = transform.position;
-        float maxStep = maxTeleportDistance;
-        if (maxStep > 0f && (afterMove - beforeMove).sqrMagnitude > maxStep * maxStep)
-        {
-            bool hasState = Object != null && Object.HasStateAuthority;
-            Debug.LogWarning($"[NPCController][Teleport] state={hasState} before={beforeMove} after={afterMove} moveDir={moveDirection} speed={speed:F2} vVel={verticalVelocity:F2} netDest={NetDestination} hasDest={NetHasDestination} agentEnabled={(agent != null && agent.enabled)} onNavMesh={(agent != null && agent.isOnNavMesh)} hasPath={(agent != null && agent.hasPath)}", this);
-        }
 
         animator.SetFloat(animIDSpeed, animationBlend);
         animator.SetFloat(animIDMotionSpeed, inputMagnitude);
@@ -705,29 +657,8 @@ public class NPCController : NetworkBehaviour
         }
     }
 
-    private void TrackTickTeleport(float deltaTime)
-    {
-        Vector3 current = transform.position;
-        if (hasLastTickPosition == false)
-        {
-            lastTickPosition = current;
-            hasLastTickPosition = true;
-            return;
-        }
 
-        float maxStep = maxTeleportDistance;
-        if (maxStep > 0f)
-        {
-            float sqr = (current - lastTickPosition).sqrMagnitude;
-            if (sqr > maxStep * maxStep)
-            {
-                bool hasState = Object != null && Object.HasStateAuthority;
-                Debug.LogWarning($"[NPCController][TickTeleport] state={hasState} from={lastTickPosition} to={current} delta={Mathf.Sqrt(sqr):0.00} moveDir={moveDirection} speed={speed:0.00} vVel={verticalVelocity:0.00} netDest={NetDestination} hasDest={NetHasDestination} tick={(Runner != null ? Runner.Tick : 0)} dt={deltaTime:0.000}", this);
-            }
-        }
-
-        lastTickPosition = current;
-    }
+    
 
     private void JumpAndGravity(float deltaTime)
     {
@@ -787,10 +718,7 @@ public class NPCController : NetworkBehaviour
             return;
         }
 
-        if (debugNpc && Object.HasStateAuthority == false)
-        {
-            Debug.Log($"[NPC Anim][Client] speed={NetAnimSpeed:0.00} motion={NetAnimMotionSpeed:0.00} grounded={NetAnimGrounded} vVel={NetVerticalVelocity:0.00}", this);
-        }
+        
 
         animator.SetBool(animIDGrounded, NetAnimGrounded);
         bool isJumping = NetAnimGrounded == false && NetVerticalVelocity > 0.1f;

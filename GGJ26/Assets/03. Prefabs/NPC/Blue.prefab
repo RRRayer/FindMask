@@ -372,7 +372,7 @@ GameObject:
   - component: {fileID: 1939021157780750258}
   - component: {fileID: 7212592482297200950}
   - component: {fileID: 3919135070344895946}
-  - component: {fileID: -670967679882165521}
+  - component: {fileID: 2367984510528753218}
   m_Layer: 6
   m_Name: Blue
   m_TagString: Player
@@ -515,7 +515,7 @@ MonoBehaviour:
   GroundLayers:
     serializedVersion: 2
     m_Bits: 1
-  debugNpc: 1
+  debugNpc: 0
   debugInterval: 1
   maxTeleportDistance: 8
   _IsDead:
@@ -594,7 +594,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 4758391324168672161}
-  - {fileID: -670967679882165521}
+  - {fileID: 2367984510528753218}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &3919135070344895946
 MonoBehaviour:
@@ -610,7 +610,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speedParam: Speed
   motionSpeedParam: MotionSpeed
---- !u!114 &-670967679882165521
+--- !u!114 &2367984510528753218
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
