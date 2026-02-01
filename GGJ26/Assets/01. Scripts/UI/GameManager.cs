@@ -103,13 +103,16 @@ public class GameManager : NetworkBehaviour
     
     private void OnPlayerStateChanged(PlayerState updatedState)
     {
+        Debug.Log($"[GameManager] OnPlayerStateChanged received for PlayerId: {updatedState.PlayerId}, IsSeeker: {updatedState.IsSeeker}.");
+
         if (playerStateManager.TryGetLocalPlayer(out var localState))
         {
+            Debug.Log($"[GameManager] Local player is known. Local ID: {localState.PlayerId}. Comparing with updated ID: {updatedState.PlayerId}.");
             if (updatedState.PlayerId == localState.PlayerId)
             {
                 if (uiCanvasManager != null)
                 {
-                    Debug.Log($"[GameManager] OnPlayerStateChanged: Local player role is now Seeker = {updatedState.IsSeeker}. Updating UI.");
+                    Debug.Log($"[GameManager] Confirmed local player state change. Role is now Seeker = {updatedState.IsSeeker}. Updating UI.");
                     if (updatedState.IsSeeker)
                     {
                         Debug.Log("enableseeker");
@@ -121,7 +124,19 @@ public class GameManager : NetworkBehaviour
                         uiCanvasManager.EnableHiderCanvas();
                     }
                 }
+                else
+                {
+                    Debug.LogWarning("[GameManager] uiCanvasManager is null. Cannot update UI.");
+                }
             }
+            else
+            {
+                Debug.Log($"[GameManager] State change was for another player ({updatedState.PlayerId}). Ignoring for UI purposes.");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[GameManager] Could not get local player from PlayerStateManager. UI will not be updated at this time. This is expected if the local player has not been fully registered yet.");
         }
     }
 

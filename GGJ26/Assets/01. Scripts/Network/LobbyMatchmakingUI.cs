@@ -9,6 +9,7 @@ public class LobbyMatchmakingUI : MonoBehaviour
 {
     [SerializeField] private FusionLauncher launcher;
     [SerializeField] private UIGenericButton startButton;
+    [SerializeField] private UIGenericButton exitButton;
     [SerializeField] private bool allowKeyboardStart = true;
     [SerializeField] private Key startKey = Key.Enter;
     [SerializeField] private string matchmakingMessage = "Matching...";
@@ -33,10 +34,10 @@ public class LobbyMatchmakingUI : MonoBehaviour
             startButton = FindFirstObjectByType<UIGenericButton>();
         }
 
-        if (popupRoot == null)
-        {
-            BuildPopup();
-        }
+        // if (popupRoot == null)
+        // {
+        //     BuildPopup();
+        // }
 
         if (popupRoot != null)
         {
@@ -106,6 +107,15 @@ public class LobbyMatchmakingUI : MonoBehaviour
         }
     }
 
+    public void onBtnExit()
+    {
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+        #else
+        Application.Quit();
+        #endif
+    }
+
     private void StartMatchmaking()
     {
         if (launcher == null)
@@ -144,6 +154,7 @@ public class LobbyMatchmakingUI : MonoBehaviour
         {
             popupRoot.SetActive(isMatchmaking);
         }
+
     }
 
     private void BuildPopup()
