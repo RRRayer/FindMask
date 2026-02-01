@@ -53,6 +53,11 @@ public class BlueNPC : BaseNPC
     {
         if (NpcController == null || agent == null) return;
 
+        if (IsAgentReady == false)
+        {
+            return;
+        }
+
         agent.nextPosition = transform.position;
 
         maskStateTimer -= GetDeltaTime();

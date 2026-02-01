@@ -515,8 +515,9 @@ MonoBehaviour:
   GroundLayers:
     serializedVersion: 2
     m_Bits: 1
-  debugNpc: 0
+  debugNpc: 1
   debugInterval: 1
+  maxTeleportDistance: 8
   _IsDead:
     _value: 0
 --- !u!195 &2165630663973288436

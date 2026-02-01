@@ -43,11 +43,16 @@ public class GreenNPC : BaseNPC
     {
         if (NpcController == null || agent == null) return;
 
+        if (IsAgentReady == false)
+        {
+            return;
+        }
+
         agent.nextPosition = transform.position;
 
         if (currentMaskState == MaskState.Walking)
         {
-            walkTimer -= Time.deltaTime;
+            walkTimer -= GetDeltaTime();
             if (walkTimer <= 0)
             {
                 SetState(MaskState.Jumping);
@@ -58,7 +63,14 @@ public class GreenNPC : BaseNPC
             {
                 if (wanderProvider.GetRandomNavMeshPoint(out Vector3 dest))
                 {
-                    agent.SetDestination(dest);
+                    if (NpcController != null)
+                    {
+                        NpcController.SetCommandDestination(dest);
+                    }
+                    else
+                    {
+                        agent.SetDestination(dest);
+                    }
                 }
             }
             NpcController.SetMovement(agent.desiredVelocity.normalized, false); // false for walking
@@ -90,17 +102,30 @@ public class GreenNPC : BaseNPC
         if (newState == MaskState.Walking)
         {
             walkTimer = RandomRangePicker(WalkDuration);
-            agent.isStopped = false;
-            if (wanderProvider.GetRandomNavMeshPoint(out Vector3 dest))
+            if (IsAgentReady)
             {
-                agent.SetDestination(dest);
+                agent.isStopped = false;
+                if (wanderProvider.GetRandomNavMeshPoint(out Vector3 dest))
+                {
+                    if (NpcController != null)
+                    {
+                        NpcController.SetCommandDestination(dest);
+                    }
+                    else
+                    {
+                        agent.SetDestination(dest);
+                    }
+                }
             }
         }
         else // Jumping
         {
             jumpsRemaining = RandomRangePicker(JumpCount);
-            agent.isStopped = true;
-            agent.ResetPath();
+            if (IsAgentReady)
+            {
+                agent.isStopped = true;
+                agent.ResetPath();
+            }
         }
     }
 
