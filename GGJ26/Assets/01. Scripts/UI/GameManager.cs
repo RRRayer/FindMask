@@ -83,8 +83,8 @@ public class GameManager : NetworkBehaviour
         if (playerStateManager != null)
         {
             playerStateManager.OnPlayerStateChanged += OnPlayerStateChanged;
+            playerStateManager.OnAllNonSeekersDead += HandleAllNonSeekersDead;
         }
-        PlayerElimination.OnAnyEliminated += HandlePlayerEliminated;
     }
 
     private void OnDisable()
@@ -97,8 +97,8 @@ public class GameManager : NetworkBehaviour
         if (playerStateManager != null)
         {
             playerStateManager.OnPlayerStateChanged -= OnPlayerStateChanged;
+            playerStateManager.OnAllNonSeekersDead -= HandleAllNonSeekersDead;
         }
-        PlayerElimination.OnAnyEliminated -= HandlePlayerEliminated;
     }
     
     private void OnPlayerStateChanged(PlayerState updatedState)
@@ -473,9 +473,9 @@ public class GameManager : NetworkBehaviour
         return null;
     }
 
-    private void HandlePlayerEliminated(PlayerElimination eliminated)
+    private void HandleAllNonSeekersDead()
     {
-        if (Object == null || Object.HasStateAuthority == false)
+        if (IsAuthoritativeForGameEnd() == false)
         {
             return;
         }
@@ -484,28 +484,23 @@ public class GameManager : NetworkBehaviour
         {
             return;
         }
+        Debug.Log("[GameManager] Event: All Non-Seekers Dead. Seekers Win.");
+        EndGame(seekerWin: true);
+    }
 
-        int aliveNonSeekers = 0;
-        var roles = FindObjectsByType<PlayerRole>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-        foreach (var role in roles)
+    private bool IsAuthoritativeForGameEnd()
+    {
+        if (Object != null && Object.HasStateAuthority)
         {
-            if (role == null || role.IsSeeker)
-            {
-                continue;
-            }
-
-            var elim = role.GetComponent<PlayerElimination>();
-            if (elim != null && elim.IsEliminated == false)
-            {
-                aliveNonSeekers++;
-            }
+            return true;
         }
 
-        if (aliveNonSeekers == 0)
+        if (Runner != null && Runner.IsRunning && Runner.IsSharedModeMasterClient)
         {
-            Debug.Log("[GameManager] Event: All Non-Seekers Dead. Seekers Win.");
-            EndGame(seekerWin: true);
+            return true;
         }
+
+        return false;
     }
 
     private void UnlockCursorForResult()

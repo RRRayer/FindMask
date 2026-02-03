@@ -21,7 +21,6 @@ public class PlayerElimination : NetworkBehaviour
     private int animIDDead;
     private bool snappedToGroundOnDeath;
     private GameObject spectatorInstance;
-    public static System.Action<PlayerElimination> OnAnyEliminated;
 
     private void Awake()
     {
@@ -74,13 +73,8 @@ public class PlayerElimination : NetworkBehaviour
     {
         if (lastEliminated != IsEliminated)
         {
-            bool transitionedToEliminated = lastEliminated == false && IsEliminated;
             lastEliminated = IsEliminated;
             ApplyEliminatedState();
-            if (transitionedToEliminated)
-            {
-                OnAnyEliminated?.Invoke(this);
-            }
         }
     }
 

@@ -5266,10 +5266,6 @@ PrefabInstance:
       propertyPath: SortKey
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3439145653052261392, guid: fe9646060860870468e10550124355b1, type: 3}
-      propertyPath: NetworkedBehaviours.Array.size
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 5635472117089175894, guid: fe9646060860870468e10550124355b1, type: 3}
       propertyPath: txtTimer
       value: 
@@ -5290,9 +5286,17 @@ PrefabInstance:
       propertyPath: groupDanceActiveEvent
       value: 
       objectReference: {fileID: 11400000, guid: 2f392a79a9c07cb4d84bbadf00f5947a, type: 2}
+    - target: {fileID: 5635472117089175894, guid: fe9646060860870468e10550124355b1, type: 3}
+      propertyPath: playerStateManager
+      value: 
+      objectReference: {fileID: 3179646395537372629}
     - target: {fileID: 7863296486997111603, guid: fe9646060860870468e10550124355b1, type: 3}
       propertyPath: m_Name
       value: GameManager
+      objectReference: {fileID: 0}
+    - target: {fileID: 8329258970861036553, guid: fe9646060860870468e10550124355b1, type: 3}
+      propertyPath: Flags
+      value: 131073
       objectReference: {fileID: 0}
     - target: {fileID: 8329258970861036553, guid: fe9646060860870468e10550124355b1, type: 3}
       propertyPath: SortKey
@@ -5637,6 +5641,10 @@ PrefabInstance:
     - target: {fileID: 2391887014560584950, guid: 302fb3a2e00a8fc4d910545cbeb7ddb8, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6111275866977147054, guid: 302fb3a2e00a8fc4d910545cbeb7ddb8, type: 3}
+      propertyPath: Flags
+      value: 131073
       objectReference: {fileID: 0}
     - target: {fileID: 6111275866977147054, guid: 302fb3a2e00a8fc4d910545cbeb7ddb8, type: 3}
       propertyPath: SortKey

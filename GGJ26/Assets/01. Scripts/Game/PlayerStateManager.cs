@@ -10,6 +10,7 @@ public class PlayerStateManager : NetworkBehaviour
     private string localPlayerId;
 
     public event System.Action<PlayerState> OnPlayerStateChanged;
+    public event System.Action OnAllNonSeekersDead;
 
     public override void Spawned()
     {
@@ -139,6 +140,7 @@ public class PlayerStateManager : NetworkBehaviour
         }
 
         OnPlayerStateChanged?.Invoke(playerState);
+        TryNotifyAllNonSeekersDead();
     }
 
     public void SetLocalPlayer(string playerId)
@@ -158,6 +160,7 @@ public class PlayerStateManager : NetworkBehaviour
             state.IsDead = true;
             Debug.Log($"[PlayerStateManager] MarkDead: player {playerId} now dead.");
             OnPlayerStateChanged?.Invoke(state);
+            TryNotifyAllNonSeekersDead();
         }
         else
         {
@@ -358,5 +361,33 @@ public class PlayerStateManager : NetworkBehaviour
                 Debug.Log($"[PlayerStateManager] Flush Local MarkDead: {pending[i]}");
             }
         }
+    }
+
+    private void TryNotifyAllNonSeekersDead()
+    {
+        if (IsAuthoritative() == false)
+        {
+            return;
+        }
+
+        if (AreAllNonSeekersDead())
+        {
+            OnAllNonSeekersDead?.Invoke();
+        }
+    }
+
+    private bool IsAuthoritative()
+    {
+        if (Object != null && Object.HasStateAuthority)
+        {
+            return true;
+        }
+
+        if (Runner != null && Runner.IsRunning && Runner.IsSharedModeMasterClient)
+        {
+            return true;
+        }
+
+        return false;
     }
 }
