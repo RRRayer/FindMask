@@ -2,20 +2,20 @@
 using UnityEngine.AI;
 
 /// <summary>
-/// BaseNPC瑜??곸냽諛쏆븘, '?щ━湲?? '?湲?瑜?諛섎났?섎뒗 媛硫??됰룞???뺤쓽?⑸땲??
+/// BaseNPC를 상속받아, '움직이기'와 '대기'를 반복하는 가면 행동을 정의합니다.
 /// </summary>
 [RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(WanderPointProvider))]
 public class RedNPC : BaseNPC
 {
-    [Header("RedNPC ?ㅼ젙")]
-    [Tooltip("紐⑹쟻吏???쇰쭏??媛源뚯썙吏硫??ㅼ쓬 紐⑹쟻吏瑜?李얠쓣吏 寃곗젙")]
+    [Header("RedNPC 설정")]
+    [Tooltip("목적지에서 얼마나 가까워지면 다음 목적지를 찾을지 결정")]
     public float stoppingDistance = 1.5f;
 
-    [Header("媛硫??됰룞 ?ㅼ젙")]
-    [Tooltip("?щ━湲??곹깭瑜??좎????쒓컙 (理쒖냼, 理쒕?)")]
+    [Header("가면 행동 설정")]
+    [Tooltip("움직이기 상태를 유지할 시간 (최소, 최대)")]
     public float[] RunDuration = new float[] { 2f, 5f };
-    [Tooltip("?湲??곹깭瑜??좎????쒓컙 (理쒖냼, 理쒕?)")]
+    [Tooltip("대기 상태를 유지할 시간 (최소, 최대)")]
     public float[] IdleDuration = new float[] { 2f, 5f };
 
     private enum MaskState { Running, Idling }
@@ -35,8 +35,8 @@ public class RedNPC : BaseNPC
             return;
         }
 
-        // 珥덇린 ?곹깭瑜??쒕뜡?쇰줈 ?ㅼ젙?⑸땲??
-        if (Random.value < 0.5f) // 50% ?뺣쪧濡?Running, 50% ?뺣쪧濡?Idling
+        // 초기 상태를 랜덤으로 설정합니다.
+        if (Random.value < 0.5f) // 50% 확률로 Running, 50% 확률로 Idling
         {
             currentMaskState = MaskState.Running;
             maskStateTimer = RandomRangePicker(RunDuration);
@@ -69,13 +69,13 @@ public class RedNPC : BaseNPC
     }
 
     /// <summary>
-    /// 留??꾨젅???ㅽ뻾?섎ŉ '?щ━湲?? '?湲? ?곹깭???곕씪 ?됰룞??寃곗젙?⑸땲??
+    /// 매 프레임 실행되며 '움직이기'와 '대기' 상태에 따라 행동을 결정합니다.
     /// </summary>
     protected override void ExecuteMaskBehavior()
     {
         if (NpcController == null || agent == null) return;
 
-        // NavMeshAgent???꾩튂瑜?罹먮┃?곗쓽 ?ㅼ젣 ?꾩튂濡?怨꾩냽 ?낅뜲?댄듃?⑸땲??
+        // NavMeshAgent의 위치를 캐릭터의 실제 위치로 계속 업데이트합니다.
         if (IsAgentReady == false)
         {
             return;
@@ -83,32 +83,32 @@ public class RedNPC : BaseNPC
 
         agent.nextPosition = transform.position;
 
-        // ?꾩옱 ?곹깭????대㉧瑜?媛먯냼?쒗궎怨? ?쒓컙?????섎㈃ ?곹깭瑜?蹂寃쏀빀?덈떎.
+        // 현재 상태 타이머를 감소시키고, 시간이 다 되면 상태를 변경합니다.
         maskStateTimer -= GetDeltaTime();
         if (maskStateTimer <= 0)
         {
             SwitchMaskState();
         }
 
-        // ?꾩옱 ?곹깭???곕Ⅸ ?됰룞???ㅽ뻾?⑸땲??
+        // 현재 상태에 따른 행동을 실행합니다.
         if (currentMaskState == MaskState.Running)
         {
-            // 紐⑹쟻吏???꾩갑?섎㈃ ?덈줈??紐⑹쟻吏瑜??ㅼ젙?⑸땲??
+            // 목적지에 도착하면 새로운 목적지를 설정합니다.
             if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
             {
                 SetNewWanderDestination();
             }
 
-            // NPCController??'?щ━湲?瑜?紐낅졊?⑸땲??
+            // NPCController에 '움직이기'를 명령합니다.
             if (NpcController != null)
             {
                 NpcController.SetCommandStopped(false);
                 NpcController.SetCommandSprinting(true);
             }
         }
-        else // Idling ?곹깭??寃쎌슦
+        else // Idling 상태일 경우
         {
-            // NPCController??'?뺤?'瑜?紐낅졊?⑸땲??
+            // NPCController에 '정지'를 명령합니다.
             if (NpcController != null)
             {
                 NpcController.SetCommandStopped(true);
@@ -118,13 +118,13 @@ public class RedNPC : BaseNPC
     }
 
     /// <summary>
-    /// '?щ━湲?? '?湲? ?곹깭瑜??꾪솚?⑸땲??
+    /// '움직이기'와 '대기' 상태를 전환합니다.
     /// </summary>
     private void SwitchMaskState()
     {
         if (currentMaskState == MaskState.Running)
         {
-            // '?湲? ?곹깭濡?蹂寃?
+            // '대기' 상태로 변경
             currentMaskState = MaskState.Idling;
             maskStateTimer = RandomRangePicker(IdleDuration);
             if (IsAgentReady)
@@ -138,9 +138,9 @@ public class RedNPC : BaseNPC
                 NpcController.SetCommandSprinting(false);
             }
         }
-        else // Idling ?곹깭??ㅻ㈃
+        else // Idling 상태라면
         {
-            // '?щ━湲? ?곹깭濡?蹂寃?
+            // '움직이기' 상태로 변경
             currentMaskState = MaskState.Running;
             maskStateTimer = RandomRangePicker(RunDuration);
             if (IsAgentReady)
@@ -157,7 +157,7 @@ public class RedNPC : BaseNPC
     }
     
     /// <summary>
-    /// WanderPointProvider瑜??ъ슜???덈줈??紐⑹쟻吏瑜?李얘퀬, NavMeshAgent???ㅼ젙?⑸땲??
+    /// WanderPointProvider를 사용하여 새로운 목적지를 찾고, NavMeshAgent에 설정합니다.
     /// </summary>
     private void SetNewWanderDestination()
     {
