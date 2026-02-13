@@ -219,7 +219,17 @@ public class FusionThirdPersonMotor : NetworkBehaviour
             StopDance();
         }
 
-        bool lockMovement = GameManager.Instance != null && GameManager.Instance.IsGroupDanceActive;
+        if (lockMovement)
+        {
+            isGrounded = CheckGrounded();
+            verticalVelocity = 0f;
+            rotationVelocity = 0f;
+            inputMagnitude = 0f;
+            horizontalSpeed = 0f;
+            lastJumpPressedTime = -10f;
+
+            return;
+        }
 
         // If we are dancing, we should not process any movement input.
         if (NetIsDancing)
