@@ -229,7 +229,12 @@ public class FusionThirdPersonMotor : NetworkBehaviour
             }
 
             // Keep gravity while movement is locked so airborne players can land naturally.
+            Vector3 preLockPosition = transform.position;
             ApplyGravity(Vector3.zero, false);
+
+            // Hard-lock horizontal position during group dance to prevent tiny drift from physics/contacts.
+            Vector3 postLockPosition = transform.position;
+            transform.position = new Vector3(preLockPosition.x, postLockPosition.y, preLockPosition.z);
             rotationVelocity = 0f;
             inputMagnitude = 0f;
             horizontalSpeed = 0f;
