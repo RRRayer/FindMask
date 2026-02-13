@@ -352,25 +352,36 @@ public class StunGun : NetworkBehaviour
 
     private void HandleHit(RaycastHit hit)
     {
+        // --- Player branch ---
         var target = hit.collider.GetComponentInParent<PlayerElimination>();
-        if (target == null)
+        if (target != null)
         {
-            var npc = hit.collider.GetComponentInParent<BaseNPC>();
-            if (npc != null)
+            if (target.IsEliminated)
             {
-                var npcController = npc.GetComponent<NPCController>();
-                if (npcController != null)
-                {
-                    npcController.RpcTriggerDead();
-                }
-                RpcSpawnFogEffect(npc.transform.position, npc.transform.rotation);
+                return;
             }
+
+            target.RpcRequestPlayDeadAnimation();
+            target.RpcRequestEliminate();
+            target.ApplyEliminatedStateImmediate();
             return;
         }
 
-        target.RpcRequestPlayDeadAnimation();
-        target.RpcRequestEliminate();
-        target.ApplyEliminatedStateImmediate();
+        // --- NPC branch ---
+        var npc = hit.collider.GetComponentInParent<BaseNPC>();
+        if (npc == null)
+        {
+            return;
+        }
+
+        var npcController = npc.GetComponent<NPCController>();
+        if (npcController == null || npcController.IsDead)
+        {
+            return;
+        }
+
+        npcController.RpcTriggerDead();
+        RpcSpawnFogEffect(npc.transform.position, npc.transform.rotation);
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
