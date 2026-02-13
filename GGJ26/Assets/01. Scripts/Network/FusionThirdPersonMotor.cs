@@ -223,7 +223,13 @@ public class FusionThirdPersonMotor : NetworkBehaviour
         if (lockMovement)
         {
             isGrounded = CheckGrounded();
-            verticalVelocity = 0f;
+            if (isGrounded)
+            {
+                lastGroundedTime = Runner.SimulationTime;
+            }
+
+            // Keep gravity while movement is locked so airborne players can land naturally.
+            ApplyGravity(Vector3.zero, false);
             rotationVelocity = 0f;
             inputMagnitude = 0f;
             horizontalSpeed = 0f;
