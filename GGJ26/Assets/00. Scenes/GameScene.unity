@@ -890,7 +890,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: -1350719223, guid: 069a00c4a21d8654bbe27600f3ba7103, type: 3}
-  m_Type: 0
+  m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -4313,6 +4313,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6563334754708612028, guid: 84a3ea2ba79765b4d9c27f1c4d411437, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1227170228}
+    - targetCorrespondingSourceObject: {fileID: 6563334754708612028, guid: 84a3ea2ba79765b4d9c27f1c4d411437, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1227170232}
   m_SourcePrefab: {fileID: 100100000, guid: 84a3ea2ba79765b4d9c27f1c4d411437, type: 3}
 --- !u!114 &1227170221 stripped
 MonoBehaviour:
@@ -4375,6 +4378,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   seekerCanvas: {fileID: 1227170227}
   hiderCanvas: {fileID: 1227170226}
+--- !u!114 &1227170232
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1227170225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36d49c5e2776a044ab41dbfb8d11f42c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _skillImage: {fileID: 334359791}
+  _seekerSkillSettings: {fileID: 11400000, guid: cde42c8bd9b9e2a42b13ef236e862d16, type: 2}
 --- !u!1 &1374895495
 GameObject:
   m_ObjectHideFlags: 0
