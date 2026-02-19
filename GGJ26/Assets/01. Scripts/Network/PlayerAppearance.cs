@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 public class PlayerAppearance : MonoBehaviour
 {
@@ -9,10 +8,8 @@ public class PlayerAppearance : MonoBehaviour
 
     [Header("Visual Roots (optional)")]
     [SerializeField] private GameObject seekerVisualRoot;
-    [SerializeField] private GameObject[] seekerSkinRoots = new GameObject[0];
-    [SerializeField] private Transform seekerSkinContainer;
-    [SerializeField] private GameObject[] seekerSkinPrefabs = new GameObject[0];
     [SerializeField] private GameObject normalVisualRoot;
+    [SerializeField] private GameObject[] seekerMaskObjects = new GameObject[0];
 
     [Header("Mask Objects (optional)")]
     [SerializeField] private GameObject[] maskObjects = new GameObject[3];
@@ -38,7 +35,8 @@ public class PlayerAppearance : MonoBehaviour
     private int lastMaskIndex = -2;
     private int lastSeekerSkinIndex = -1;
     private bool hasInitializedMask;
-    private SkinnedMeshRenderer[] seekerSkinBoneTemplates = new SkinnedMeshRenderer[0];
+    private bool previewMode;
+    private int previewSeekerSkinIndex;
 
     private void Awake()
     {
@@ -53,7 +51,7 @@ public class PlayerAppearance : MonoBehaviour
         }
 
         AutoAssignMaskObjects();
-        BuildSeekerSkinRootsFromPrefabs();
+        AutoAssignSeekerMaskObjects();
     }
 
     private void OnEnable()
@@ -90,6 +88,12 @@ public class PlayerAppearance : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (previewMode)
+        {
+            ApplyRoleVisual(true, previewSeekerSkinIndex);
+            return;
+        }
+
         if (role == null || role.HasRoleAssigned() == false)
         {
             return;
@@ -126,21 +130,42 @@ public class PlayerAppearance : MonoBehaviour
         }
     }
 
-    private void ApplyRoleVisual(bool isSeeker, int seekerSkinIndex)
+    public void SetPreviewMode(bool enabled)
     {
-        if (seekerSkinRoots != null && seekerSkinRoots.Length > 0)
-        {
-            for (int i = 0; i < seekerSkinRoots.Length; i++)
-            {
-                if (seekerSkinRoots[i] == null)
-                {
-                    continue;
-                }
+        previewMode = enabled;
 
-                seekerSkinRoots[i].SetActive(isSeeker && i == Mathf.Clamp(seekerSkinIndex, 0, seekerSkinRoots.Length - 1));
+        if (enabled == false)
+        {
+            if (seekerVisualRoot != null)
+            {
+                seekerVisualRoot.SetActive(false);
+            }
+
+            if (normalVisualRoot != null)
+            {
+                normalVisualRoot.SetActive(false);
             }
         }
-        else if (seekerVisualRoot != null)
+    }
+
+    public void SetPreviewSeekerSkinIndex(int index)
+    {
+        previewSeekerSkinIndex = index;
+
+        if (previewMode)
+        {
+            ApplyRoleVisual(true, previewSeekerSkinIndex);
+        }
+    }
+
+    public int GetSeekerMaskCount()
+    {
+        return seekerMaskObjects != null ? seekerMaskObjects.Length : 0;
+    }
+
+    private void ApplyRoleVisual(bool isSeeker, int seekerSkinIndex)
+    {
+        if (seekerVisualRoot != null)
         {
             seekerVisualRoot.SetActive(isSeeker);
         }
@@ -149,149 +174,8 @@ public class PlayerAppearance : MonoBehaviour
         {
             normalVisualRoot.SetActive(!isSeeker);
         }
-    }
-
-    private void BuildSeekerSkinRootsFromPrefabs()
-    {
-        if (seekerSkinPrefabs == null || seekerSkinPrefabs.Length == 0)
-        {
-            return;
-        }
-
-        CacheSeekerSkinBoneTemplates();
-
-        if (seekerSkinContainer == null)
-        {
-            seekerSkinContainer = transform.Find("Geometry");
-            if (seekerSkinContainer == null)
-            {
-                seekerSkinContainer = transform;
-            }
-        }
-
-        if (seekerSkinRoots != null)
-        {
-            for (int i = 0; i < seekerSkinRoots.Length; i++)
-            {
-                if (seekerSkinRoots[i] != null)
-                {
-                    seekerSkinRoots[i].SetActive(false);
-                }
-            }
-        }
-
-        var runtimeRoots = new List<GameObject>(seekerSkinPrefabs.Length);
-        for (int i = 0; i < seekerSkinPrefabs.Length; i++)
-        {
-            GameObject skinPrefab = seekerSkinPrefabs[i];
-            if (skinPrefab == null)
-            {
-                continue;
-            }
-
-            GameObject skinInstance = Instantiate(skinPrefab, seekerSkinContainer);
-            skinInstance.name = skinPrefab.name;
-            RebindSeekerSkinBones(skinInstance);
-            skinInstance.SetActive(false);
-            runtimeRoots.Add(skinInstance);
-        }
-
-        if (runtimeRoots.Count > 0)
-        {
-            seekerSkinRoots = runtimeRoots.ToArray();
-
-            if (seekerVisualRoot != null)
-            {
-                seekerVisualRoot.SetActive(false);
-            }
-        }
-    }
-
-    private void CacheSeekerSkinBoneTemplates()
-    {
-        var templates = new List<SkinnedMeshRenderer>();
-
-        if (seekerSkinRoots != null)
-        {
-            for (int i = 0; i < seekerSkinRoots.Length; i++)
-            {
-                if (seekerSkinRoots[i] == null)
-                {
-                    continue;
-                }
-
-                var renderers = seekerSkinRoots[i].GetComponentsInChildren<SkinnedMeshRenderer>(true);
-                for (int j = 0; j < renderers.Length; j++)
-                {
-                    if (renderers[j] != null)
-                    {
-                        templates.Add(renderers[j]);
-                    }
-                }
-            }
-        }
-
-        if (templates.Count == 0 && seekerVisualRoot != null)
-        {
-            var renderers = seekerVisualRoot.GetComponentsInChildren<SkinnedMeshRenderer>(true);
-            for (int i = 0; i < renderers.Length; i++)
-            {
-                if (renderers[i] != null)
-                {
-                    templates.Add(renderers[i]);
-                }
-            }
-        }
-
-        seekerSkinBoneTemplates = templates.ToArray();
-    }
-
-    private void RebindSeekerSkinBones(GameObject skinRoot)
-    {
-        if (skinRoot == null || seekerSkinBoneTemplates == null || seekerSkinBoneTemplates.Length == 0)
-        {
-            return;
-        }
-
-        var renderers = skinRoot.GetComponentsInChildren<SkinnedMeshRenderer>(true);
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            var target = renderers[i];
-            if (target == null)
-            {
-                continue;
-            }
-
-            SkinnedMeshRenderer template = FindSeekerTemplateRenderer(target.name);
-            if (template == null)
-            {
-                template = seekerSkinBoneTemplates[0];
-            }
-
-            target.rootBone = template.rootBone;
-            target.bones = template.bones;
-            target.localBounds = template.localBounds;
-            target.updateWhenOffscreen = template.updateWhenOffscreen;
-        }
-    }
-
-    private SkinnedMeshRenderer FindSeekerTemplateRenderer(string rendererName)
-    {
-        for (int i = 0; i < seekerSkinBoneTemplates.Length; i++)
-        {
-            var candidate = seekerSkinBoneTemplates[i];
-            if (candidate == null)
-            {
-                continue;
-            }
-
-            if (candidate.name == rendererName)
-            {
-                return candidate;
-            }
-        }
-
-        return null;
+        
+        ApplySeekerMaskVisual(isSeeker, seekerSkinIndex);
     }
 
     private void ApplyMaskVisual(int maskIndex)
@@ -367,6 +251,59 @@ public class PlayerAppearance : MonoBehaviour
             {
                 maskObjects[2] = t.gameObject;
             }
+        }
+    }
+
+    private void ApplySeekerMaskVisual(bool isSeeker, int seekerSkinIndex)
+    {
+        if (seekerMaskObjects == null || seekerMaskObjects.Length == 0)
+        {
+            return;
+        }
+
+        int clampedIndex = Mathf.Clamp(seekerSkinIndex, 0, seekerMaskObjects.Length - 1);
+        for (int i = 0; i < seekerMaskObjects.Length; i++)
+        {
+            if (seekerMaskObjects[i] == null)
+            {
+                continue;
+            }
+
+            seekerMaskObjects[i].SetActive(isSeeker && i == clampedIndex);
+        }
+    }
+
+    private void AutoAssignSeekerMaskObjects()
+    {
+        if (seekerMaskObjects != null && seekerMaskObjects.Length >= 2)
+        {
+            return;
+        }
+
+        var transforms = GetComponentsInChildren<Transform>(true);
+        GameObject dinosaur = null;
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            var t = transforms[i];
+            if (t == null)
+            {
+                continue;
+            }
+
+            if (string.Equals(t.gameObject.name, "Dinosaur", System.StringComparison.OrdinalIgnoreCase))
+            {
+                dinosaur = t.gameObject;
+                break;
+            }
+        }
+
+        if (dinosaur != null)
+        {
+            seekerMaskObjects = new[] { dinosaur, null };
+        }
+        else if (seekerMaskObjects == null || seekerMaskObjects.Length == 0)
+        {
+            seekerMaskObjects = new GameObject[2];
         }
     }
 }

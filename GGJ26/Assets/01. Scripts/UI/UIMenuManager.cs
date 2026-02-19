@@ -18,8 +18,15 @@ public class UIMenuManager : MonoBehaviour
     [Header("Listening to")]
     [SerializeField] private GameStateEventChannelSO onGameStateChanged;
 
+    private void Awake()
+    {
+        ResolveReferences();
+    }
+
     private void OnEnable()
     {
+        ResolveReferences();
+
         if (startGameButton != null) startGameButton.Clicked += StartGame;
         if (skinChangeButton != null) skinChangeButton.Clicked += OpenSkinSelect;
         if (settingsButton != null) settingsButton.Clicked += OpenSettings;
@@ -84,5 +91,78 @@ public class UIMenuManager : MonoBehaviour
 #else
         Application.Quit();
 #endif
+    }
+
+    private void ResolveReferences()
+    {
+        startGameButton = ResolveButton(startGameButton, "BtnStart");
+        skinChangeButton = ResolveButton(skinChangeButton, "BtnSkinChange");
+        settingsButton = ResolveButton(settingsButton, "BtnSettings");
+        exitButton = ResolveButton(exitButton, "BtnExit");
+
+        if (settingsPanel == null)
+        {
+            settingsPanel = FindGameObjectByName("MainMenuSettingsPanel");
+        }
+
+        if (skinSelectPanel == null)
+        {
+            skinSelectPanel = FindObjectByName<UISkinSelectController>("SkinSelectPanel");
+        }
+    }
+
+    private UIGenericButton ResolveButton(UIGenericButton current, string expectedName)
+    {
+        if (current != null && current.gameObject.name == expectedName)
+        {
+            return current;
+        }
+
+        UIGenericButton[] buttons = FindObjectsByType<UIGenericButton>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            UIGenericButton candidate = buttons[i];
+            if (candidate != null && candidate.gameObject.name == expectedName)
+            {
+                return candidate;
+            }
+        }
+
+        return current;
+    }
+
+    private T FindObjectByName<T>(string objectName) where T : Component
+    {
+        T[] objects = FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < objects.Length; i++)
+        {
+            T candidate = objects[i];
+            if (candidate != null && candidate.gameObject.name == objectName)
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private GameObject FindGameObjectByName(string objectName)
+    {
+        Transform[] all = Resources.FindObjectsOfTypeAll<Transform>();
+        for (int i = 0; i < all.Length; i++)
+        {
+            Transform tr = all[i];
+            if (tr == null || tr.name != objectName)
+            {
+                continue;
+            }
+
+            if (tr.gameObject.scene.IsValid() && tr.gameObject.scene.isLoaded)
+            {
+                return tr.gameObject;
+            }
+        }
+
+        return null;
     }
 }
