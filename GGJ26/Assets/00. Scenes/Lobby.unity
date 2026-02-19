@@ -1515,6 +1515,93 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8427817047006603496, guid: 01955a87dc88e2045a4c3e13389b6848, type: 3}
   m_PrefabInstance: {fileID: 461909563}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &470992005
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 3893294197879345259, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -3.77
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -0.6054684
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.79586947
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -105.475
+      objectReference: {fileID: 0}
+    - target: {fileID: 3893294197879345259, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3978347823390045238, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+      propertyPath: SortKey
+      value: 1239753848
+      objectReference: {fileID: 0}
+    - target: {fileID: 4416926081852918481, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+      propertyPath: m_Name
+      value: PreviewSeekerModel
+      objectReference: {fileID: 0}
+    - target: {fileID: 4416926081852918481, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4546415456009545338, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9100000000000000010, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+      propertyPath: seekerMaskObjects.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 9100000000000000010, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+      propertyPath: 'seekerMaskObjects.Array.data[0]'
+      value: 
+      objectReference: {fileID: 470992007}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+--- !u!1 &470992006 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4416926081852918481, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+  m_PrefabInstance: {fileID: 470992005}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &470992007 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2077228438610097283, guid: 702a0f3420f845d08995e734ff5dd4bd, type: 3}
+  m_PrefabInstance: {fileID: 470992005}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &492085670
 GameObject:
   m_ObjectHideFlags: 0
@@ -2403,11 +2490,16 @@ MonoBehaviour:
   closeButton: {fileID: 2060531616}
   skinNameText: {fileID: 2000019307}
   equipButtonText: {fileID: 322827808}
+  previewActorRoot: {fileID: 470992006}
+  previewActorName: PreviewSeekerModel
   prevKey: 276
   nextKey: 275
   prevAltKey: 97
   nextAltKey: 100
   closeKey: 27
+  enableDebugLogs: 1
+  runtimeApplyRetryInterval: 0.5
+  runtimeApplyTimeout: 15
 --- !u!224 &731955486
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2445,7 +2537,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.2, g: 0.2, b: 0.2, a: 0.45}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -5436,3 +5528,4 @@ SceneRoots:
   - {fileID: 371226638}
   - {fileID: 3277762559824591028}
   - {fileID: 2104941841}
+  - {fileID: 470992005}
