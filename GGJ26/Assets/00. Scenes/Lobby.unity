@@ -2529,6 +2529,8 @@ MonoBehaviour:
   disconnectVoiceOutsideGameScene: 1
   proximityMinDistance: 6
   proximityMaxDistance: 40
+  voiceOutputMixerGroup: {fileID: 24300002, guid: d9084dee7259d2b43a99e89cd85b22c0, type: 2}
+  voiceSourceVolume: 1.728
 --- !u!1 &2104941839
 GameObject:
   m_ObjectHideFlags: 0
