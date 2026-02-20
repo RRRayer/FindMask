@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using Fusion;
 using Fusion.Sockets;
+using Photon.Voice.Fusion;
+using Photon.Realtime;
+using Photon.Voice.Unity;
 using StarterAssets;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -46,6 +49,12 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
     [SerializeField] private FusionRoleAssignmentService roleService;
     [SerializeField] private FusionInputBridge inputBridge;
 
+    [Header("Voice")]
+    [SerializeField] private bool enableVoiceInGameSceneOnly = true;
+    [SerializeField] private bool disconnectVoiceOutsideGameScene = true;
+    [SerializeField] private float proximityMinDistance = 2f;
+    [SerializeField] private float proximityMaxDistance = 18f;
+
     public event Action<bool> MatchmakingStateChanged;
     public bool IsMatchmaking => sessionFlow != null && sessionFlow.IsMatchmaking;
     public int MaxPlayers => maxPlayers;
@@ -56,6 +65,8 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
     private NetworkRunner runner;
     private bool callbacksRegistered;
     private string lastScenePath;
+    private float nextVoiceProfileApplyTime;
+    private bool warnedMissingVoiceAppId;
 
     private void Awake()
     {
@@ -164,6 +175,12 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
         if (spawnService != null)
         {
             spawnService.TickUpdate(IsGameScene());
+        }
+
+        if (enableVoiceInGameSceneOnly && IsGameScene() && Time.unscaledTime >= nextVoiceProfileApplyTime)
+        {
+            ApplyProximityProfileToSpeakers();
+            nextVoiceProfileApplyTime = Time.unscaledTime + 1f;
         }
     }
 
@@ -297,9 +314,12 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
         }
 
         lastScenePath = activePath;
+        bool isGameScene = IsGameScene();
+        ApplyVoiceModeForScene(isGameScene);
+        nextVoiceProfileApplyTime = 0f;
         if (spawnService != null)
         {
-            spawnService.OnSceneLoadDone(IsGameScene());
+            spawnService.OnSceneLoadDone(isGameScene);
         }
     }
 
@@ -335,6 +355,7 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
+        ForceDisconnectVoice();
         callbacksRegistered = false;
         lastScenePath = null;
         if (spawnService != null)
@@ -374,6 +395,101 @@ public class FusionLauncher : MonoBehaviour, INetworkRunnerCallbacks
         if (sessionFlow != null)
         {
             sessionFlow.StartGameScene();
+        }
+    }
+
+    private void ApplyVoiceModeForScene(bool isGameScene)
+    {
+        if (enableVoiceInGameSceneOnly == false)
+        {
+            return;
+        }
+
+        var voiceClient = FindFirstObjectByType<FusionVoiceClient>();
+        if (voiceClient == null)
+        {
+            return;
+        }
+
+        if (isGameScene)
+        {
+            if (HasVoiceAppIdConfigured(voiceClient) == false)
+            {
+                if (warnedMissingVoiceAppId == false)
+                {
+                    warnedMissingVoiceAppId = true;
+                    Debug.LogError("[FusionLauncher] Voice AppId is missing. Set AppIdVoice in Fusion PhotonAppSettings.");
+                }
+                return;
+            }
+
+            warnedMissingVoiceAppId = false;
+            if (voiceClient.ClientState == ClientState.Disconnected || voiceClient.ClientState == ClientState.PeerCreated)
+            {
+                voiceClient.ConnectAndJoinRoom();
+            }
+
+            ApplyProximityProfileToSpeakers();
+            return;
+        }
+
+        if (disconnectVoiceOutsideGameScene)
+        {
+            if (voiceClient.ClientState != ClientState.Disconnected && voiceClient.ClientState != ClientState.Disconnecting)
+            {
+                voiceClient.Disconnect();
+            }
+        }
+    }
+
+    private void ForceDisconnectVoice()
+    {
+        var voiceClient = FindFirstObjectByType<FusionVoiceClient>();
+        if (voiceClient != null)
+        {
+            if (voiceClient.ClientState != ClientState.Disconnected && voiceClient.ClientState != ClientState.Disconnecting)
+            {
+                voiceClient.Disconnect();
+            }
+        }
+    }
+
+    private bool HasVoiceAppIdConfigured(FusionVoiceClient voiceClient)
+    {
+        if (voiceClient != null && voiceClient.Settings != null && string.IsNullOrWhiteSpace(voiceClient.Settings.AppIdVoice) == false)
+        {
+            return true;
+        }
+
+        if (Fusion.Photon.Realtime.PhotonAppSettings.TryGetGlobal(out var settings) && settings != null)
+        {
+            return string.IsNullOrWhiteSpace(settings.AppSettings.AppIdVoice) == false;
+        }
+
+        return false;
+    }
+
+    private void ApplyProximityProfileToSpeakers()
+    {
+        var speakers = FindObjectsByType<Speaker>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < speakers.Length; i++)
+        {
+            var speaker = speakers[i];
+            if (speaker == null)
+            {
+                continue;
+            }
+
+            var source = speaker.GetComponent<AudioSource>();
+            if (source == null)
+            {
+                source = speaker.gameObject.AddComponent<AudioSource>();
+            }
+
+            source.spatialBlend = 1f;
+            source.rolloffMode = AudioRolloffMode.Logarithmic;
+            source.minDistance = proximityMinDistance;
+            source.maxDistance = proximityMaxDistance;
         }
     }
 }
