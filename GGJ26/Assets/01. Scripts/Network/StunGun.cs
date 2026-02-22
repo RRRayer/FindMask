@@ -2,6 +2,8 @@ using Fusion;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using System.Collections;
+using System.Collections.Generic;
 
 public class StunGun : NetworkBehaviour
 {
@@ -21,6 +23,8 @@ public class StunGun : NetworkBehaviour
     [SerializeField] private UnityEngine.VFX.VisualEffect shootVfx;
     [Header("AI Death Effect")]
     [SerializeField] private GameObject fogEffectPrefab;
+    [SerializeField] private float fogEffectLifetime = 10f;
+    [SerializeField] private float fogEffectFadeDuration = 2f;
     [Header("Audio")]
     [SerializeField] private AudioCueEventChannelSO sfxEventChannel;
     [SerializeField] private AudioConfigurationSO sfxConfiguration;
@@ -81,6 +85,8 @@ public class StunGun : NetworkBehaviour
             shootTransform,
             shootVfx,
             fogEffectPrefab,
+            fogEffectLifetime,
+            fogEffectFadeDuration,
             sfxEventChannel,
             sfxConfiguration,
             shootSfxCue,
@@ -417,6 +423,8 @@ internal sealed class StunGunFx
     private readonly Transform shootTransform;
     private UnityEngine.VFX.VisualEffect shootVfx;
     private readonly GameObject fogEffectPrefab;
+    private readonly float fogEffectLifetime;
+    private readonly float fogEffectFadeDuration;
     private readonly AudioCueEventChannelSO sfxEventChannel;
     private readonly AudioConfigurationSO sfxConfiguration;
     private readonly AudioCueSO shootSfxCue;
@@ -428,6 +436,8 @@ internal sealed class StunGunFx
         Transform shootTransform,
         UnityEngine.VFX.VisualEffect shootVfx,
         GameObject fogEffectPrefab,
+        float fogEffectLifetime,
+        float fogEffectFadeDuration,
         AudioCueEventChannelSO sfxEventChannel,
         AudioConfigurationSO sfxConfiguration,
         AudioCueSO shootSfxCue,
@@ -438,6 +448,8 @@ internal sealed class StunGunFx
         this.shootTransform = shootTransform;
         this.shootVfx = shootVfx;
         this.fogEffectPrefab = fogEffectPrefab;
+        this.fogEffectLifetime = fogEffectLifetime;
+        this.fogEffectFadeDuration = fogEffectFadeDuration;
         this.sfxEventChannel = sfxEventChannel;
         this.sfxConfiguration = sfxConfiguration;
         this.shootSfxCue = shootSfxCue;
@@ -478,7 +490,14 @@ internal sealed class StunGunFx
             return;
         }
 
-        Object.Instantiate(fogEffectPrefab, position, rotation);
+        var fog = Object.Instantiate(fogEffectPrefab, position, rotation);
+        var autoFade = fog.GetComponent<FogEffectAutoFade>();
+        if (autoFade == null)
+        {
+            autoFade = fog.AddComponent<FogEffectAutoFade>();
+        }
+
+        autoFade.Initialize(fogEffectLifetime, fogEffectFadeDuration);
     }
 
     public void SpawnHitEffect(Vector3 position, Vector3 normal)
@@ -504,6 +523,127 @@ internal sealed class StunGunFx
         }
 
         sfxEventChannel.RaisePlayEvent(cue, sfxConfiguration, position);
+    }
+}
+
+internal sealed class FogEffectAutoFade : MonoBehaviour
+{
+    private readonly List<Renderer> cachedRenderers = new List<Renderer>();
+    private readonly List<MaterialPropertyBlock> propertyBlocks = new List<MaterialPropertyBlock>();
+    private readonly List<float> initialAlphas = new List<float>();
+    private bool initialized;
+    private float lifetime;
+    private float fadeDuration;
+
+    public void Initialize(float totalLifetime, float fadeOutDuration)
+    {
+        lifetime = Mathf.Max(0.1f, totalLifetime);
+        fadeDuration = Mathf.Clamp(fadeOutDuration, 0f, lifetime);
+
+        CacheRenderers();
+        initialized = true;
+        StartCoroutine(FadeRoutine());
+    }
+
+    private void CacheRenderers()
+    {
+        cachedRenderers.Clear();
+        propertyBlocks.Clear();
+        initialAlphas.Clear();
+
+        var renderers = GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            var r = renderers[i];
+            if (r == null || r.sharedMaterial == null)
+            {
+                continue;
+            }
+
+            cachedRenderers.Add(r);
+            propertyBlocks.Add(new MaterialPropertyBlock());
+
+            float alpha = 1f;
+            var mat = r.sharedMaterial;
+            if (mat.HasProperty("_BaseColor"))
+            {
+                alpha = mat.GetColor("_BaseColor").a;
+            }
+            else if (mat.HasProperty("_Color"))
+            {
+                alpha = mat.GetColor("_Color").a;
+            }
+
+            initialAlphas.Add(alpha);
+        }
+    }
+
+    private IEnumerator FadeRoutine()
+    {
+        if (fadeDuration < 0.01f)
+        {
+            yield return new WaitForSeconds(lifetime);
+            Destroy(gameObject);
+            yield break;
+        }
+
+        float waitTime = Mathf.Max(0f, lifetime - fadeDuration);
+        if (waitTime > 0f)
+        {
+            yield return new WaitForSeconds(waitTime);
+        }
+
+        float t = 0f;
+        while (t < fadeDuration)
+        {
+            t += Time.deltaTime;
+            float normalized = Mathf.Clamp01(t / fadeDuration);
+            float alphaMultiplier = 1f - normalized;
+            ApplyAlpha(alphaMultiplier);
+            yield return null;
+        }
+
+        ApplyAlpha(0f);
+        Destroy(gameObject);
+    }
+
+    private void ApplyAlpha(float alphaMultiplier)
+    {
+        if (initialized == false)
+        {
+            return;
+        }
+
+        for (int i = 0; i < cachedRenderers.Count; i++)
+        {
+            var renderer = cachedRenderers[i];
+            if (renderer == null)
+            {
+                continue;
+            }
+
+            var block = propertyBlocks[i];
+            renderer.GetPropertyBlock(block);
+
+            float alpha = initialAlphas[i] * alphaMultiplier;
+            var material = renderer.sharedMaterial;
+
+            if (material != null && material.HasProperty("_BaseColor"))
+            {
+                Color c = material.GetColor("_BaseColor");
+                c.a = alpha;
+                block.SetColor("_BaseColor", c);
+            }
+
+            if (material != null && material.HasProperty("_Color"))
+            {
+                Color c = material.GetColor("_Color");
+                c.a = alpha;
+                block.SetColor("_Color", c);
+            }
+
+            renderer.SetPropertyBlock(block);
+        }
     }
 }
 
