@@ -95,10 +95,25 @@ public class UIMenuManager : MonoBehaviour
 
     private void ResolveReferences()
     {
-        startGameButton = ResolveButton(startGameButton, "BtnStart");
-        skinChangeButton = ResolveButton(skinChangeButton, "BtnSkinChange");
-        settingsButton = ResolveButton(settingsButton, "BtnSettings");
-        exitButton = ResolveButton(exitButton, "BtnExit");
+        if (startGameButton != null)
+        {
+            startGameButton = ResolveButton(startGameButton, "BtnStart");
+        }
+
+        if (skinChangeButton != null)
+        {
+            skinChangeButton = ResolveButton(skinChangeButton, "BtnSkinChange");
+        }
+
+        if (settingsButton != null)
+        {
+            settingsButton = ResolveButton(settingsButton, "BtnSettings");
+        }
+
+        if (exitButton != null)
+        {
+            exitButton = ResolveButton(exitButton, "BtnExit");
+        }
 
         if (settingsPanel == null)
         {
