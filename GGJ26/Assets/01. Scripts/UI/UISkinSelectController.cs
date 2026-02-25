@@ -3,6 +3,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
+using StarterAssets;
 
 public class UISkinSelectController : MonoBehaviour
 {
@@ -34,11 +36,20 @@ public class UISkinSelectController : MonoBehaviour
     [SerializeField] private KeyCode prevAltKey = KeyCode.A;
     [SerializeField] private KeyCode nextAltKey = KeyCode.D;
     [SerializeField] private KeyCode closeKey = KeyCode.Escape;
+    [SerializeField] private bool alwaysOpenInLobby = true;
 
     [Header("Debug")]
     [SerializeField] private bool enableDebugLogs = true;
     [SerializeField] private float runtimeApplyRetryInterval = 0.5f;
     [SerializeField] private float runtimeApplyTimeout = 15f;
+
+    [Header("RenderTexture Preview (optional)")]
+    [SerializeField] private bool useRenderTexturePreview = true;
+    [SerializeField] private Camera previewCamera;
+    [SerializeField] private RawImage previewRawImage;
+    [SerializeField] private Vector3 previewCameraOffset = new Vector3(0f, 1.2f, 2.2f);
+    [SerializeField] private Vector2Int previewTextureSize = new Vector2Int(512, 768);
+    [SerializeField] private Color previewBackgroundColor = new Color(0f, 0f, 0f, 0f);
 
     private int currentIndex;
     private int equippedIndex;
@@ -47,6 +58,10 @@ public class UISkinSelectController : MonoBehaviour
     private bool pendingRuntimeApply;
     private float runtimeApplyDeadline;
     private float nextRuntimeApplyTime;
+    private bool previewInputDisabled;
+    private bool lobbyInputPrepared;
+    private RenderTexture previewRenderTexture;
+    private bool ownsPreviewTexture;
 
     private void Awake()
     {
@@ -59,9 +74,42 @@ public class UISkinSelectController : MonoBehaviour
         }
 
         EnsurePreviewActorResolved();
-        if (previewActorRoot != null)
+        if (previewActorRoot != null && alwaysOpenInLobby == false)
         {
             previewActorRoot.SetActive(false);
+        }
+
+        if (alwaysOpenInLobby)
+        {
+            if (panelRoot != null)
+            {
+                panelRoot.SetActive(true);
+            }
+
+            if (previewActorRoot != null)
+            {
+                previewActorRoot.SetActive(true);
+            }
+
+            if (equipButton != null)
+            {
+                equipButton.gameObject.SetActive(false);
+            }
+
+            if (closeButton != null)
+            {
+                closeButton.gameObject.SetActive(false);
+            }
+
+            DisablePreviewInputComponents();
+            PrepareLobbyInputForUI();
+            var preview = GetPreviewAppearance();
+            if (preview != null)
+            {
+                preview.SetPreviewMode(true);
+            }
+            SetupRenderTexturePreview();
+            isOpen = true;
         }
     }
 
@@ -69,17 +117,34 @@ public class UISkinSelectController : MonoBehaviour
     {
         if (prevButton != null) prevButton.onClick.AddListener(Prev);
         if (nextButton != null) nextButton.onClick.AddListener(Next);
-        if (equipButton != null) equipButton.onClick.AddListener(EquipCurrent);
-        if (closeButton != null) closeButton.onClick.AddListener(Close);
+        if (alwaysOpenInLobby == false)
+        {
+            if (equipButton != null) equipButton.onClick.AddListener(EquipCurrent);
+            if (closeButton != null) closeButton.onClick.AddListener(Close);
+        }
         ApplyPreview();
+        if (alwaysOpenInLobby)
+        {
+            var preview = GetPreviewAppearance();
+            if (preview != null)
+            {
+                preview.SetPreviewMode(true);
+            }
+            PrepareLobbyInputForUI();
+            SetupRenderTexturePreview();
+            ApplyCurrentSelectionImmediately();
+        }
     }
 
     private void OnDisable()
     {
         if (prevButton != null) prevButton.onClick.RemoveListener(Prev);
         if (nextButton != null) nextButton.onClick.RemoveListener(Next);
-        if (equipButton != null) equipButton.onClick.RemoveListener(EquipCurrent);
-        if (closeButton != null) closeButton.onClick.RemoveListener(Close);
+        if (alwaysOpenInLobby == false)
+        {
+            if (equipButton != null) equipButton.onClick.RemoveListener(EquipCurrent);
+            if (closeButton != null) closeButton.onClick.RemoveListener(Close);
+        }
     }
 
     private void Update()
@@ -110,6 +175,11 @@ public class UISkinSelectController : MonoBehaviour
             return;
         }
 
+        if (alwaysOpenInLobby)
+        {
+            ForceLobbyCursorUnlocked();
+        }
+
         if (WasPressedThisFrame(prevKey) || WasPressedThisFrame(prevAltKey))
         {
             Prev();
@@ -120,7 +190,7 @@ public class UISkinSelectController : MonoBehaviour
             Next();
         }
 
-        if (WasPressedThisFrame(closeKey))
+        if (alwaysOpenInLobby == false && WasPressedThisFrame(closeKey))
         {
             Close();
         }
@@ -128,6 +198,31 @@ public class UISkinSelectController : MonoBehaviour
 
     public void Open()
     {
+        if (alwaysOpenInLobby)
+        {
+            isOpen = true;
+            if (panelRoot != null)
+            {
+                panelRoot.SetActive(true);
+            }
+
+            if (previewActorRoot != null)
+            {
+                previewActorRoot.SetActive(true);
+            }
+
+            var preview = GetPreviewAppearance();
+            if (preview != null)
+            {
+                preview.SetPreviewMode(true);
+            }
+
+            SetupRenderTexturePreview();
+            ApplyPreview();
+            ApplyCurrentSelectionImmediately();
+            return;
+        }
+
         if (panelRoot != null)
         {
             panelRoot.SetActive(true);
@@ -141,16 +236,21 @@ public class UISkinSelectController : MonoBehaviour
             previewActorRoot.SetActive(true);
         }
 
-        var preview = GetPreviewAppearance();
-        if (preview != null)
+        var previewComp = GetPreviewAppearance();
+        if (previewComp != null)
         {
-            preview.SetPreviewMode(true);
+            previewComp.SetPreviewMode(true);
         }
         ApplyPreview();
     }
 
     public void Close()
     {
+        if (alwaysOpenInLobby)
+        {
+            return;
+        }
+
         isOpen = false;
         if (previewAppearance != null)
         {
@@ -177,6 +277,7 @@ public class UISkinSelectController : MonoBehaviour
 
         currentIndex = (currentIndex + 1) % skinCount;
         ApplyPreview();
+        ApplyCurrentSelectionImmediately();
     }
 
     public void Prev()
@@ -189,6 +290,7 @@ public class UISkinSelectController : MonoBehaviour
 
         currentIndex = (currentIndex - 1 + skinCount) % skinCount;
         ApplyPreview();
+        ApplyCurrentSelectionImmediately();
     }
 
     public void EquipCurrent()
@@ -208,6 +310,17 @@ public class UISkinSelectController : MonoBehaviour
         {
             Debug.Log($"[SkinSelect] Equip clicked. currentIndex={currentIndex}, savedIndex={equippedIndex}");
         }
+        pendingRuntimeApply = true;
+        runtimeApplyDeadline = Time.unscaledTime + Mathf.Max(1f, runtimeApplyTimeout);
+        nextRuntimeApplyTime = Time.unscaledTime;
+        ApplyEquippedSkinToLocalSeeker();
+        UpdateEquipLabel();
+    }
+
+    private void ApplyCurrentSelectionImmediately()
+    {
+        equippedIndex = currentIndex;
+        SeekerSkinSelection.SaveSelectedSkinIndex(equippedIndex);
         pendingRuntimeApply = true;
         runtimeApplyDeadline = Time.unscaledTime + Mathf.Max(1f, runtimeApplyTimeout);
         nextRuntimeApplyTime = Time.unscaledTime;
@@ -259,7 +372,7 @@ public class UISkinSelectController : MonoBehaviour
             return;
         }
 
-        equipButtonText.text = currentIndex == equippedIndex ? "Equipped" : "Equip";
+        equipButtonText.text = alwaysOpenInLobby ? "Selected" : (currentIndex == equippedIndex ? "Equipped" : "Equip");
     }
 
     private bool WasPressedThisFrame(KeyCode key)
@@ -341,6 +454,170 @@ public class UISkinSelectController : MonoBehaviour
 
             previewActorRoot = tr.gameObject;
             break;
+        }
+    }
+
+    private void DisablePreviewInputComponents()
+    {
+        if (previewInputDisabled || previewActorRoot == null)
+        {
+            return;
+        }
+
+        var starterInputs = previewActorRoot.GetComponentsInChildren<StarterAssetsInputs>(true);
+        for (int i = 0; i < starterInputs.Length; i++)
+        {
+            if (starterInputs[i] == null)
+            {
+                continue;
+            }
+
+            starterInputs[i].ForceCursorUnlocked();
+            starterInputs[i].enabled = false;
+        }
+
+        var playerInputs = previewActorRoot.GetComponentsInChildren<PlayerInput>(true);
+        for (int i = 0; i < playerInputs.Length; i++)
+        {
+            if (playerInputs[i] == null)
+            {
+                continue;
+            }
+
+            playerInputs[i].enabled = false;
+        }
+
+        previewInputDisabled = true;
+    }
+
+    private void ForceLobbyCursorUnlocked()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    private void LateUpdate()
+    {
+        if (alwaysOpenInLobby == false || isOpen == false)
+        {
+            return;
+        }
+
+        UpdatePreviewCameraPose();
+
+        // Some gameplay components can re-lock the cursor later in the frame.
+        // Enforce unlocked cursor state in LateUpdate so UGUI remains clickable.
+        ForceLobbyCursorUnlocked();
+    }
+
+    private void PrepareLobbyInputForUI()
+    {
+        ForceLobbyCursorUnlocked();
+
+        if (lobbyInputPrepared)
+        {
+            return;
+        }
+
+        var spectators = FindObjectsByType<SpectatorController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < spectators.Length; i++)
+        {
+            if (spectators[i] != null)
+            {
+                spectators[i].enabled = false;
+            }
+        }
+
+        var allInputs = FindObjectsByType<StarterAssetsInputs>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < allInputs.Length; i++)
+        {
+            if (allInputs[i] == null)
+            {
+                continue;
+            }
+
+            allInputs[i].ForceCursorUnlocked();
+        }
+
+        if (EventSystem.current != null)
+        {
+            EventSystem.current.sendNavigationEvents = true;
+        }
+
+        lobbyInputPrepared = true;
+    }
+
+    private void SetupRenderTexturePreview()
+    {
+        if (useRenderTexturePreview == false || previewActorRoot == null)
+        {
+            return;
+        }
+
+        if (previewCamera == null || previewRawImage == null)
+        {
+            if (enableDebugLogs)
+            {
+                Debug.LogWarning("[SkinSelect] Assign previewCamera and previewRawImage in Lobby scene.");
+            }
+            return;
+        }
+
+        previewCamera.clearFlags = CameraClearFlags.SolidColor;
+        previewCamera.backgroundColor = previewBackgroundColor;
+        previewCamera.nearClipPlane = 0.01f;
+        previewCamera.farClipPlane = 20f;
+        previewCamera.enabled = true;
+
+        var listener = previewCamera.GetComponent<AudioListener>();
+        if (listener != null)
+        {
+            listener.enabled = false;
+        }
+
+        int width = Mathf.Max(128, previewTextureSize.x);
+        int height = Mathf.Max(128, previewTextureSize.y);
+        bool needsNewTexture = previewRenderTexture == null || previewRenderTexture.width != width || previewRenderTexture.height != height;
+        if (needsNewTexture)
+        {
+            if (ownsPreviewTexture && previewRenderTexture != null)
+            {
+                previewRenderTexture.Release();
+                Destroy(previewRenderTexture);
+            }
+
+            previewRenderTexture = new RenderTexture(width, height, 16, RenderTextureFormat.ARGB32);
+            previewRenderTexture.name = "RT_SkinPreview";
+            previewRenderTexture.Create();
+            ownsPreviewTexture = true;
+        }
+
+        previewCamera.targetTexture = previewRenderTexture;
+        previewCamera.rect = new Rect(0f, 0f, 1f, 1f);
+        previewRawImage.texture = previewRenderTexture;
+
+        UpdatePreviewCameraPose();
+    }
+
+    private void UpdatePreviewCameraPose()
+    {
+        if (previewCamera == null || previewActorRoot == null)
+        {
+            return;
+        }
+
+        Vector3 lookPos = previewActorRoot.transform.position + Vector3.up * 1.4f;
+        previewCamera.transform.position = lookPos + previewCameraOffset;
+        previewCamera.transform.LookAt(lookPos);
+    }
+
+    private void OnDestroy()
+    {
+        if (ownsPreviewTexture && previewRenderTexture != null)
+        {
+            previewRenderTexture.Release();
+            Destroy(previewRenderTexture);
+            previewRenderTexture = null;
         }
     }
 
