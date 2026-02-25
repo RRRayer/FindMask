@@ -144,7 +144,7 @@ public class PlayerElimination : NetworkBehaviour
 
     private void ApplyEliminatedState()
     {
-        bool eliminated = IsEliminated;
+        bool eliminated = CanAccessNetworkedState() && IsEliminated;
 
         if (motor != null)
         {
@@ -267,6 +267,11 @@ public class PlayerElimination : NetworkBehaviour
 
     private void LateUpdate()
     {
+        if (CanAccessNetworkedState() == false)
+        {
+            return;
+        }
+
         if (IsEliminated == false)
         {
             return;
@@ -300,5 +305,10 @@ public class PlayerElimination : NetworkBehaviour
         }
 
         return false;
+    }
+
+    private bool CanAccessNetworkedState()
+    {
+        return Object != null && Object.IsValid;
     }
 }
