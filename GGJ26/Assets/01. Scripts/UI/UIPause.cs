@@ -1,51 +1,44 @@
-using System;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
+using UnityEngine.UI;
 
 public class UIPause : MonoBehaviour
 {
     [Header("UI Components")]
-    [SerializeField] private UIGenericButton resumeButton;
-    [SerializeField] private UIGenericButton restartButton;
-    [SerializeField] private UIGenericButton settingsButton;
-    [SerializeField] private UIGenericButton loadMainMenuButton;
+    [FormerlySerializedAs("resumeButton")]
+    [SerializeField] private Button backButton;
+    [SerializeField] private Button settingsButton;
+    [FormerlySerializedAs("loadMainMenuButton")]
+    [SerializeField] private Button exitButton;
 
-    [Header("SaveLoadSystem")]
-    [SerializeField] private SaveLoadSystem saveLoadSystem;
-    
+    public event UnityAction BackEvent;
     public event UnityAction ResumeEvent;
-    public event UnityAction RestartEvent;
     public event UnityAction SettingsEvent;
-    public event UnityAction LoadMainMenuEvent;
+    public event UnityAction ExitEvent;
+
+    // Legacy events kept to avoid compile breaks in old callers.
+    // public event UnityAction RestartEvent;
+    // public event UnityAction LoadMainMenuEvent;
 
     private void OnEnable()
     {
-        resumeButton.Clicked       += OnResumeButtonClicked;
-        restartButton.Clicked      += OnRestartButtonClicked;
-        settingsButton.Clicked     += OnSettingsButtonClicked;
-        loadMainMenuButton.Clicked += OnLoadMainMenuButtonClicked;
+        if (backButton != null) backButton.onClick.AddListener(OnBackButtonClicked);
+        if (settingsButton != null) settingsButton.onClick.AddListener(OnSettingsButtonClicked);
+        if (exitButton != null) exitButton.onClick.AddListener(OnExitButtonClicked);
     }
 
     private void OnDisable()
     {
-        resumeButton.Clicked       -= OnResumeButtonClicked;
-        restartButton.Clicked      -= OnRestartButtonClicked;
-        settingsButton.Clicked     -= OnSettingsButtonClicked;
-        loadMainMenuButton.Clicked -= OnLoadMainMenuButtonClicked;
+        if (backButton != null) backButton.onClick.RemoveListener(OnBackButtonClicked);
+        if (settingsButton != null) settingsButton.onClick.RemoveListener(OnSettingsButtonClicked);
+        if (exitButton != null) exitButton.onClick.RemoveListener(OnExitButtonClicked);
     }
 
-    /// <summary>
-    /// 재시작 이벤트 실행
-    /// </summary>
-    private void OnResumeButtonClicked()
+    private void OnBackButtonClicked()
     {
+        BackEvent?.Invoke();
         ResumeEvent?.Invoke();
-    }
-
-    private void OnRestartButtonClicked()
-    {
-        saveLoadSystem.SaveDataToDisk();
-        RestartEvent?.Invoke();
     }
 
     private void OnSettingsButtonClicked()
@@ -53,8 +46,8 @@ public class UIPause : MonoBehaviour
         SettingsEvent?.Invoke();
     }
 
-    private void OnLoadMainMenuButtonClicked()
+    private void OnExitButtonClicked()
     {
-        LoadMainMenuEvent?.Invoke();
+        ExitEvent?.Invoke();
     }
 }

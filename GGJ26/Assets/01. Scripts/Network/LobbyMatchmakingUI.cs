@@ -66,6 +66,19 @@ public class LobbyMatchmakingUI : MonoBehaviour
     private const string PrivateRoomSeparator = "#";
     private RoomMode selectedRoomMode = RoomMode.Classic;
     private bool roomPanelCreateMode = true;
+    private int escapeHandledFrame = -1;
+
+    public bool IsEscapeBlockingPanelOpen
+    {
+        get
+        {
+            bool isRoomPanelOpen = roomPanel != null && roomPanel.activeInHierarchy;
+            bool isPublicRoomPanelOpen = publicRoomPanel != null && publicRoomPanel.activeInHierarchy;
+            return isRoomPanelOpen || isPublicRoomPanelOpen;
+        }
+    }
+
+    public bool DidHandleEscapeThisFrame => escapeHandledFrame == Time.frameCount;
 
     private void Awake()
     {
@@ -599,16 +612,18 @@ private void SetRoomPanelMode(bool createMode)
         if (roomPanel != null && roomPanel.activeInHierarchy)
         {
             CloseRoomPanel();
+            escapeHandledFrame = Time.frameCount;
             return;
         }
 
         if (publicRoomPanel != null && publicRoomPanel.activeInHierarchy)
         {
             ClosePublicRoomPanel();
+            escapeHandledFrame = Time.frameCount;
             return;
         }
 
-        onBtnExit();
+        // Do not quit the game from ESC in Lobby.
     }
 
     private void ShowPopup(string message)
