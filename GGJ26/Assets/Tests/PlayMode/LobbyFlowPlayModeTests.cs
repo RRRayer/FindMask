@@ -15,6 +15,9 @@ public class LobbyFlowPlayModeTests
     [UnitySetUp]
     public IEnumerator SetUp()
     {
+        // Suppress Fusion/Photon network errors in CI (no server connection)
+        LogAssert.ignoreFailingMessages = true;
+
         SceneManager.LoadScene(LobbySceneName);
         yield return null; // Wait one frame for Awake/OnEnable
         yield return null; // Extra frame for BuildUiIfNeeded dynamic objects
