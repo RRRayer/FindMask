@@ -1,14 +1,19 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 
 public class UIMenuManager : MonoBehaviour
 {
+    [Header("Managers")]
+    [SerializeField] private UIPauseManager pauseManager;
+    [SerializeField] private UISettingManger settingManager;
+    [SerializeField] private LobbyMatchmakingUI lobbyMatchmakingUI;
+
     [Header("UI Components")]
     [SerializeField] private UIGenericButton startGameButton;
     [SerializeField] private UIGenericButton skinChangeButton;
     [SerializeField] private UIGenericButton settingsButton;
     [SerializeField] private UIGenericButton exitButton;
-    [SerializeField] private GameObject settingsPanel;
     [SerializeField] private UISkinSelectController skinSelectPanel;
 
     [Header("Start Flow")]
@@ -31,7 +36,6 @@ public class UIMenuManager : MonoBehaviour
         if (skinChangeButton != null) skinChangeButton.Clicked += OpenSkinSelect;
         if (settingsButton != null) settingsButton.Clicked += OpenSettings;
         if (exitButton != null) exitButton.Clicked += ExitGame;
-
     }
 
     private void OnDisable()
@@ -40,7 +44,11 @@ public class UIMenuManager : MonoBehaviour
         if (skinChangeButton != null) skinChangeButton.Clicked -= OpenSkinSelect;
         if (settingsButton != null) settingsButton.Clicked -= OpenSettings;
         if (exitButton != null) exitButton.Clicked -= ExitGame;
+    }
 
+    private void Update()
+    {
+        HandleEscapeKey();
     }
 
     private void StartGame()
@@ -70,18 +78,43 @@ public class UIMenuManager : MonoBehaviour
 
     private void OpenSettings()
     {
-        if (settingsPanel != null)
+        if (settingManager == null)
         {
-            settingsPanel.SetActive(true);
+            Debug.LogWarning("[UIMenuManager] Setting manager is missing.");
+            return;
         }
+
+        settingManager.OpenFromMenu();
     }
 
-    private void CloseSettings()
+    private void HandleEscapeKey()
     {
-        if (settingsPanel != null)
+        if (Keyboard.current == null || Keyboard.current.escapeKey.wasPressedThisFrame == false)
         {
-            settingsPanel.SetActive(false);
+            return;
         }
+
+        if (lobbyMatchmakingUI != null)
+        {
+            if (lobbyMatchmakingUI.IsEscapeBlockingPanelOpen || lobbyMatchmakingUI.DidHandleEscapeThisFrame)
+            {
+                return;
+            }
+        }
+
+        if (settingManager != null && settingManager.IsOpen)
+        {
+            settingManager.Close();
+            return;
+        }
+
+        if (pauseManager == null)
+        {
+            Debug.LogWarning("[UIMenuManager] Pause manager is missing.");
+            return;
+        }
+
+        pauseManager.HandlePauseInput();
     }
 
     private void ExitGame()
@@ -115,14 +148,40 @@ public class UIMenuManager : MonoBehaviour
             exitButton = ResolveButton(exitButton, "BtnExit");
         }
 
-        if (settingsPanel == null)
+        if (settingManager == null)
         {
-            settingsPanel = FindGameObjectByName("MainMenuSettingsPanel");
+            settingManager = FindFirstObjectByType<UISettingManger>(FindObjectsInactive.Include);
+            if (settingManager == null)
+            {
+                settingManager = gameObject.GetComponent<UISettingManger>();
+            }
+            if (settingManager == null)
+            {
+                settingManager = gameObject.AddComponent<UISettingManger>();
+            }
+        }
+
+        if (pauseManager == null)
+        {
+            pauseManager = FindFirstObjectByType<UIPauseManager>(FindObjectsInactive.Include);
+            if (pauseManager == null)
+            {
+                pauseManager = gameObject.GetComponent<UIPauseManager>();
+            }
+            if (pauseManager == null)
+            {
+                pauseManager = gameObject.AddComponent<UIPauseManager>();
+            }
         }
 
         if (skinSelectPanel == null)
         {
             skinSelectPanel = FindObjectByName<UISkinSelectController>("SkinSelectPanel");
+        }
+
+        if (lobbyMatchmakingUI == null)
+        {
+            lobbyMatchmakingUI = FindFirstObjectByType<LobbyMatchmakingUI>(FindObjectsInactive.Include);
         }
     }
 
@@ -155,26 +214,6 @@ public class UIMenuManager : MonoBehaviour
             if (candidate != null && candidate.gameObject.name == objectName)
             {
                 return candidate;
-            }
-        }
-
-        return null;
-    }
-
-    private GameObject FindGameObjectByName(string objectName)
-    {
-        Transform[] all = Resources.FindObjectsOfTypeAll<Transform>();
-        for (int i = 0; i < all.Length; i++)
-        {
-            Transform tr = all[i];
-            if (tr == null || tr.name != objectName)
-            {
-                continue;
-            }
-
-            if (tr.gameObject.scene.IsValid() && tr.gameObject.scene.isLoaded)
-            {
-                return tr.gameObject;
             }
         }
 
