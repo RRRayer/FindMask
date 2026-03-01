@@ -9,6 +9,10 @@ on:
       - ".github/workflows/unity-tests.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+  checks: write
+
 jobs:
   editmode-tests:
     name: EditMode Tests
