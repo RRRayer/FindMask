@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1 &34168342165483585
 GameObject:
@@ -238,6 +238,9 @@ MonoBehaviour:
   sfxConfiguration: {fileID: 11400000, guid: 854501da1c4d88b498813056f7cc098d, type: 2}
   shootSfxCue: {fileID: 11400000, guid: 07ce1e08503ce9e4ab531c18151365e7, type: 2}
   hitSfxCue: {fileID: 11400000, guid: 83639e1cdc0b7644dbaaf8619be44c49, type: 2}
+  sharedCrosshairSize: 18
+  sharedCrosshairThickness: 2
+  sharedCrosshairColor: {r: 1, g: 1, b: 1, a: 1}
   rotateDuration: 0.05
 --- !u!114 &2233445735992974238
 MonoBehaviour:
@@ -846,17 +849,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9588d950aa1361e469ad76d6feba89cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  enableDebugLogs: 0
+  unlimitedUsesForTesting: 0
   aimLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295
   aimDistance: 60
+  smokeSpawnForwardOffset: 5
   shoeProjectilePrefab: {fileID: 1077857044643151974, guid: d2b11640890aae846aa0fee9fe7029f3, type: 3}
   shoeStunSeconds: 0.5
   shoeKnockbackSpeed: 2.4
+  shoeProjectileSpeed: 18
+  shoeProjectileLifetime: 1.2
+  shoeProjectileGravity: 9.8
+  shoeSpawnForwardOffset: 0.8
+  shoeHitRadius: 0.45
+  shoeHitDistance: 22
   ghostSmokePrefab: {fileID: 5989128303339467817, guid: 8262abb744c274246a87fdf578f77f46, type: 3}
+  ghostSmokeTemplateObjectName: SabotageGhostSmokeTemplate
   ghostSmokeLifetime: 10
   ghostSmokeFadeDuration: 2
   phantomDanceDuration: 2
+  showSpectatorCrosshair: 1
+  crosshairIdleColor: {r: 1, g: 1, b: 1, a: 1}
+  crosshairArmedColor: {r: 1, g: 0.95, b: 0.4, a: 1}
+  crosshairSize: 18
+  crosshairThickness: 2
+  spectatorCrosshairObjectName: SpectatorSabotageCrosshair
+  spectatorCrosshairRoot: {fileID: 0}
 --- !u!1 &752989075150667910
 GameObject:
   m_ObjectHideFlags: 0
@@ -3400,5 +3420,3 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 401003345071872972, guid: 498f40754c8b5df4ab19619b930ee16d, type: 3}
   m_PrefabInstance: {fileID: 7381757342065053519}
   m_PrefabAsset: {fileID: 0}
-
-

@@ -8,7 +8,7 @@ using UnityEngine.VFX;
 public class SpectatorSabotageController : NetworkBehaviour
 {
     [SerializeField] private bool enableDebugLogs = true;
-    [SerializeField] private bool unlimitedUsesForTesting = true;
+    [SerializeField] private bool unlimitedUsesForTesting = false;
 
     [Header("General")]
     [SerializeField] private LayerMask aimLayerMask = -1;
