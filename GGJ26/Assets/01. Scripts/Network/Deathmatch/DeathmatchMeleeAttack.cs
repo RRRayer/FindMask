@@ -8,18 +8,32 @@ public class DeathmatchMeleeAttack : NetworkBehaviour
     [SerializeField] private float attackRange = 2.2f;
     [SerializeField] private float attackRadius = 0.45f;
     [SerializeField] private float attackCooldown = 0.6f;
+    [SerializeField] private float attackActiveDuration = 0.22f;
+    [SerializeField] private float attackMovementLockDuration = 0.9f;
     [SerializeField] private LayerMask attackMask = -1;
     [SerializeField, Range(-1f, 1f)] private float frontDotThreshold = 0.1f;
     [SerializeField] private bool enableDebugLogs = true;
 
     private PlayerElimination elimination;
+    private FusionThirdPersonMotor motor;
+    private CharacterController characterController;
+    private Animator animator;
+    private int animIDAttack;
     private float nextAttackTime;
+    private float localMoveLockUntil;
     private PlayerInput playerInput;
+
+    [Networked] private NetworkBool NetAttackActive { get; set; }
+    [Networked] private TickTimer NetAttackTimer { get; set; }
 
     private void Awake()
     {
         elimination = GetComponent<PlayerElimination>();
+        motor = GetComponent<FusionThirdPersonMotor>();
+        characterController = GetComponent<CharacterController>();
         playerInput = GetComponent<PlayerInput>();
+        animator = GetComponent<Animator>();
+        animIDAttack = Animator.StringToHash("Attack");
     }
 
     private void Update()
@@ -30,6 +44,11 @@ public class DeathmatchMeleeAttack : NetworkBehaviour
         }
 
         if (GameModeRuntime.IsDeathmatch == false)
+        {
+            return;
+        }
+
+        if (GameManager.Instance != null && GameManager.Instance.IsGroupDanceActive)
         {
             return;
         }
@@ -49,20 +68,26 @@ public class DeathmatchMeleeAttack : NetworkBehaviour
             return;
         }
 
-        nextAttackTime = Time.time + Mathf.Max(0.05f, attackCooldown);
-
-        if (TryBuildAim(out Vector3 origin, out Vector3 direction) == false)
+        if (IsLocalAttackMoveLocked())
         {
             return;
         }
 
+        if (CanStartAttackNow() == false)
+        {
+            return;
+        }
+
+        nextAttackTime = Time.time + Mathf.Max(0.05f, attackCooldown);
+        ApplyLocalMoveLock();
+
         if (Object.HasStateAuthority)
         {
-            ExecuteAttack(origin, direction);
+            StartAttackState();
         }
         else
         {
-            RpcRequestMeleeAttack(origin, direction);
+            RpcRequestMeleeAttack();
         }
 
         if (enableDebugLogs)
@@ -72,12 +97,133 @@ public class DeathmatchMeleeAttack : NetworkBehaviour
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    private void RpcRequestMeleeAttack(Vector3 origin, Vector3 direction)
+    private void RpcRequestMeleeAttack()
     {
-        ExecuteAttack(origin, direction);
+        StartAttackState();
     }
 
-    private void ExecuteAttack(Vector3 origin, Vector3 direction)
+    public override void FixedUpdateNetwork()
+    {
+        if (Object == null || Object.HasStateAuthority == false)
+        {
+            return;
+        }
+
+        if (GameManager.Instance != null && GameManager.Instance.IsGroupDanceActive)
+        {
+            NetAttackActive = false;
+            return;
+        }
+
+        if (NetAttackActive == false)
+        {
+            return;
+        }
+
+        if (NetAttackTimer.ExpiredOrNotRunning(Runner))
+        {
+            NetAttackActive = false;
+            return;
+        }
+
+        ExecuteAttack();
+    }
+
+    private void StartAttackState()
+    {
+        if (Object == null || Object.HasStateAuthority == false)
+        {
+            return;
+        }
+
+        if (Runner == null)
+        {
+            return;
+        }
+
+        if (CanStartAttackNow() == false)
+        {
+            return;
+        }
+
+        NetAttackActive = true;
+        NetAttackTimer = TickTimer.CreateFromSeconds(Runner, Mathf.Max(0.05f, attackActiveDuration));
+        if (motor == null)
+        {
+            motor = GetComponent<FusionThirdPersonMotor>();
+        }
+        if (motor != null)
+        {
+            float lockDuration = Mathf.Max(0.05f, attackMovementLockDuration, attackCooldown);
+            motor.RequestMeleeMovementLock(lockDuration);
+        }
+        RpcPlayAttackAnimation();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcPlayAttackAnimation()
+    {
+        if (animator == null)
+        {
+            animator = GetComponent<Animator>();
+        }
+
+        if (animator == null)
+        {
+            return;
+        }
+
+        animator.SetTrigger(animIDAttack);
+        ApplyLocalMoveLock();
+    }
+
+    public bool IsLocalAttackMoveLocked()
+    {
+        return Time.time < localMoveLockUntil;
+    }
+
+    private void ApplyLocalMoveLock()
+    {
+        float lockDuration = Mathf.Max(0.05f, attackMovementLockDuration, attackCooldown);
+        localMoveLockUntil = Mathf.Max(localMoveLockUntil, Time.time + lockDuration);
+    }
+
+    private bool CanStartAttackNow()
+    {
+        if (GameManager.Instance != null && GameManager.Instance.IsGroupDanceActive)
+        {
+            return false;
+        }
+
+        if (elimination != null && elimination.Object != null && elimination.Object.IsValid && elimination.IsEliminated)
+        {
+            return false;
+        }
+
+        if (IsGroundedNow() == false)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool IsGroundedNow()
+    {
+        if (characterController == null)
+        {
+            characterController = GetComponent<CharacterController>();
+        }
+
+        if (characterController != null)
+        {
+            return characterController.isGrounded;
+        }
+
+        return true;
+    }
+
+    private void ExecuteAttack()
     {
         var match = FindFirstObjectByType<DeathmatchMatchController>();
         if (match == null || match.IsEnabled == false)
@@ -90,6 +236,11 @@ public class DeathmatchMeleeAttack : NetworkBehaviour
         }
 
         int localRaw = Object != null ? Object.InputAuthority.RawEncoded : 0;
+        if (TryBuildAim(out Vector3 origin, out Vector3 direction) == false)
+        {
+            return;
+        }
+
         if (TryFindPlayerTarget(origin, direction, localRaw, out int victimRaw))
         {
             if (enableDebugLogs)
@@ -98,6 +249,7 @@ public class DeathmatchMeleeAttack : NetworkBehaviour
             }
 
             match.RpcRegisterPlayerKill(localRaw, victimRaw);
+            NetAttackActive = false;
             return;
         }
 
@@ -114,6 +266,7 @@ public class DeathmatchMeleeAttack : NetworkBehaviour
             }
 
             match.RpcRegisterNpcPenalty(localRaw);
+            NetAttackActive = false;
             return;
         }
 
@@ -126,7 +279,12 @@ public class DeathmatchMeleeAttack : NetworkBehaviour
     private bool TryFindPlayerTarget(Vector3 origin, Vector3 direction, int selfRaw, out int victimRaw)
     {
         victimRaw = 0;
-        var hits = Physics.OverlapSphere(origin, attackRange, attackMask, QueryTriggerInteraction.Ignore);
+        var hits = Physics.OverlapCapsule(
+            origin,
+            origin + direction.normalized * attackRange,
+            Mathf.Max(0.05f, attackRadius),
+            attackMask,
+            QueryTriggerInteraction.Ignore);
         if (hits == null || hits.Length == 0)
         {
             return false;
@@ -172,6 +330,11 @@ public class DeathmatchMeleeAttack : NetworkBehaviour
                 continue;
             }
 
+            if (distance > attackRange + 0.1f)
+            {
+                continue;
+            }
+
             if (distance < bestDistance)
             {
                 bestDistance = distance;
@@ -185,7 +348,12 @@ public class DeathmatchMeleeAttack : NetworkBehaviour
     private bool TryFindNpcTarget(Vector3 origin, Vector3 direction, out NPCController targetNpc)
     {
         targetNpc = null;
-        var hits = Physics.OverlapSphere(origin, attackRange, attackMask, QueryTriggerInteraction.Ignore);
+        var hits = Physics.OverlapCapsule(
+            origin,
+            origin + direction.normalized * attackRange,
+            Mathf.Max(0.05f, attackRadius),
+            attackMask,
+            QueryTriggerInteraction.Ignore);
         if (hits == null || hits.Length == 0)
         {
             return false;
@@ -219,6 +387,11 @@ public class DeathmatchMeleeAttack : NetworkBehaviour
                 continue;
             }
 
+            if (distance > attackRange + 0.1f)
+            {
+                continue;
+            }
+
             if (distance < bestDistance)
             {
                 bestDistance = distance;
@@ -240,7 +413,10 @@ public class DeathmatchMeleeAttack : NetworkBehaviour
             return true;
         }
 
-        direction = cam.transform.forward;
+        if (Object != null && Object.HasInputAuthority)
+        {
+            direction = cam.transform.forward;
+        }
         return true;
     }
 
