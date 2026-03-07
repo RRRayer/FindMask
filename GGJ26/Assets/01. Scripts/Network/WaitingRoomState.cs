@@ -218,6 +218,62 @@ public class WaitingRoomState : NetworkBehaviour, INetworkRunnerCallbacks
         return GetPlayerCountEffective();
     }
 
+    public int GetSlotCapacity()
+    {
+        if (Runner != null && Runner.SessionInfo.IsValid && Runner.SessionInfo.MaxPlayers > 0)
+        {
+            return Runner.SessionInfo.MaxPlayers;
+        }
+
+        if (launcher != null && launcher.MaxPlayers > 0)
+        {
+            return launcher.MaxPlayers;
+        }
+
+        return players.Length;
+    }
+
+    public bool TryGetSlotInfo(int slotIndex, out PlayerRef player, out bool isReady)
+    {
+        player = default;
+        isReady = false;
+
+        if (slotIndex < 0 || slotIndex >= players.Length)
+        {
+            return false;
+        }
+
+        player = players[slotIndex];
+        if (IsPlayerValid(player) == false)
+        {
+            player = default;
+            return false;
+        }
+
+        isReady = readyStates[slotIndex];
+        return true;
+    }
+
+    public bool IsLocalPlayer(PlayerRef player)
+    {
+        return Runner != null && player == Runner.LocalPlayer;
+    }
+
+    public bool IsHostPlayer(PlayerRef player)
+    {
+        if (Runner == null || IsPlayerValid(player) == false)
+        {
+            return false;
+        }
+
+        if (Object != null && Object.IsValid)
+        {
+            return player == Object.StateAuthority;
+        }
+
+        return Runner.IsSharedModeMasterClient && player == Runner.LocalPlayer && IsHost;
+    }
+
     public int GetReadyCountPublic()
     {
         return GetReadyCountEffective();
@@ -226,8 +282,8 @@ public class WaitingRoomState : NetworkBehaviour, INetworkRunnerCallbacks
     public bool CanStartGame()
     {
         int playerCount = GetPlayerCountEffective();
-        int readyCount = GetReadyCountEffective();
-        return IsAllReadyEffective(playerCount, readyCount);
+        int minPlayers = launcher != null ? Mathf.Max(1, launcher.MinPlayersToStart) : 1;
+        return playerCount >= minPlayers;
     }
 
     private bool AllReady()
@@ -281,17 +337,7 @@ public class WaitingRoomState : NetworkBehaviour, INetworkRunnerCallbacks
     private bool IsAllReadyEffective(int playerCount, int readyCount)
     {
         int minPlayers = launcher != null ? Mathf.Max(1, launcher.MinPlayersToStart) : 1;
-        if (playerCount < minPlayers)
-        {
-            return false;
-        }
-
-        if (playerCount == 1)
-        {
-            return true;
-        }
-
-        return readyCount == playerCount;
+        return playerCount >= minPlayers;
     }
 
     private static bool IsPlayerValid(PlayerRef player)

@@ -1,19 +1,48 @@
+using Fusion;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class WaitingRoomUI : MonoBehaviour
 {
+    [System.Serializable]
+    private class WaitingRoomSlotWidgets
+    {
+        public RectTransform root;
+        public Image portraitImage;
+        public RawImage previewImage;
+        public Image baseImage;
+        public TextMeshProUGUI nameText;
+        public TextMeshProUGUI statusText;
+    }
+
     [SerializeField] private WaitingRoomState waitingRoomState;
     [SerializeField] private TextMeshProUGUI statusText;
     [SerializeField] private Button readyButton;
     [SerializeField] private TextMeshProUGUI readyButtonLabel;
     [SerializeField] private Button startButton;
     [SerializeField] private TextMeshProUGUI startButtonLabel;
+    [SerializeField] private Button leaveButton;
+    [SerializeField] private TextMeshProUGUI leaveButtonLabel;
+    [SerializeField] private WaitingRoomSlotWidgets[] slots = new WaitingRoomSlotWidgets[4];
+    [SerializeField] private Transform previewStageRoot;
+    [SerializeField] private Camera[] previewCameras = new Camera[4];
+    [SerializeField] private GameObject[] previewActors = new GameObject[4];
+    [SerializeField] private Vector2Int previewTextureSize = new Vector2Int(256, 320);
+
+    private static readonly Color LocalBaseColor = new Color(0.35f, 0.9f, 0.4f, 0.95f);
+    private static readonly Color RemoteBaseColor = new Color(0.34f, 0.78f, 0.95f, 0.95f);
+    private static readonly Color EmptyBaseColor = new Color(0.22f, 0.22f, 0.22f, 0.4f);
+    private static readonly Color OccupiedPortraitColor = new Color(0.82f, 0.9f, 1f, 0.95f);
+    private static readonly Color EmptyPortraitColor = new Color(1f, 1f, 1f, 0.08f);
 
     private bool lastIsHost;
+    private RenderTexture[] previewTextures;
+    private int lastLocalSkinIndex = -1;
 
     private void Awake()
     {
@@ -24,6 +53,7 @@ public class WaitingRoomUI : MonoBehaviour
 
         TryBindSceneWidgets();
         BuildUiIfNeeded();
+        ConfigurePreviewStage();
     }
 
     private void OnEnable()
@@ -42,6 +72,11 @@ public class WaitingRoomUI : MonoBehaviour
         {
             startButton.onClick.AddListener(OnStartClicked);
         }
+
+        if (leaveButton != null)
+        {
+            leaveButton.onClick.AddListener(OnLeaveClicked);
+        }
     }
 
     private void OnDisable()
@@ -59,6 +94,11 @@ public class WaitingRoomUI : MonoBehaviour
         if (startButton != null)
         {
             startButton.onClick.RemoveListener(OnStartClicked);
+        }
+
+        if (leaveButton != null)
+        {
+            leaveButton.onClick.RemoveListener(OnLeaveClicked);
         }
     }
 
@@ -81,6 +121,28 @@ public class WaitingRoomUI : MonoBehaviour
         {
             startButton.interactable = waitingRoomState.IsHost && waitingRoomState.CanStartGame();
         }
+
+        RefreshSlots();
+        RefreshPreviewActors();
+    }
+
+    private void OnDestroy()
+    {
+        if (previewTextures == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < previewTextures.Length; i++)
+        {
+            if (previewTextures[i] == null)
+            {
+                continue;
+            }
+
+            previewTextures[i].Release();
+            Destroy(previewTextures[i]);
+        }
     }
 
     private void RefreshButtons()
@@ -88,13 +150,18 @@ public class WaitingRoomUI : MonoBehaviour
         bool isHost = waitingRoomState != null && waitingRoomState.IsHost;
         if (readyButton != null)
         {
-            readyButton.gameObject.SetActive(!isHost);
+            readyButton.gameObject.SetActive(false);
         }
 
         if (startButton != null)
         {
             startButton.gameObject.SetActive(isHost);
-            startButton.interactable = false;
+            startButton.interactable = waitingRoomState != null && waitingRoomState.CanStartGame();
+        }
+
+        if (leaveButton != null)
+        {
+            leaveButton.gameObject.SetActive(true);
         }
     }
 
@@ -108,18 +175,31 @@ public class WaitingRoomUI : MonoBehaviour
         waitingRoomState?.RequestStartGame();
     }
 
+    private void OnLeaveClicked()
+    {
+        var launcher = FindFirstObjectByType<FusionLauncher>();
+        if (launcher != null)
+        {
+            launcher.ShutdownRunner();
+        }
+
+        SceneManager.LoadScene("Lobby");
+    }
+
     private void OnReadyStateChanged(int readyCount, int playerCount, bool allReady)
     {
         if (statusText != null)
         {
-            statusText.text = $"Ready {readyCount}/{playerCount}";
+            int capacity = waitingRoomState != null ? waitingRoomState.GetSlotCapacity() : 4;
+            statusText.text = $"Players {playerCount}/{capacity}";
         }
 
         RefreshButtons();
+        RefreshSlots();
 
         if (startButton != null)
         {
-            startButton.interactable = waitingRoomState != null && waitingRoomState.IsHost && (allReady || playerCount == 1);
+            startButton.interactable = waitingRoomState != null && waitingRoomState.IsHost && waitingRoomState.CanStartGame();
         }
     }
 
@@ -127,7 +207,8 @@ public class WaitingRoomUI : MonoBehaviour
     {
         EnsureEventSystem();
 
-        if (statusText != null && readyButton != null && startButton != null)
+        bool hasBoundSlots = slots != null && slots.Length > 0 && slots[0] != null && slots[0].root != null;
+        if (statusText != null && startButton != null && leaveButton != null && hasBoundSlots)
         {
             return;
         }
@@ -139,13 +220,12 @@ public class WaitingRoomUI : MonoBehaviour
         }
 
         var panel = CreatePanel(canvas.transform, "WaitingRoomPanel", new Vector2(520f, 260f));
-        statusText = CreateText(panel.transform, "StatusText", "Ready 0/0", 28, new Vector2(0.5f, 0.75f));
-
-        readyButton = CreateButton(panel.transform, "ReadyButton", "Ready", new Vector2(0.5f, 0.35f));
-        readyButtonLabel = readyButton.GetComponentInChildren<TextMeshProUGUI>();
-
+        statusText = CreateText(panel.transform, "StatusText", "Players 0/0", 28, new Vector2(0.5f, 0.75f));
         startButton = CreateButton(panel.transform, "StartButton", "Start Game", new Vector2(0.5f, 0.35f));
         startButtonLabel = startButton.GetComponentInChildren<TextMeshProUGUI>();
+
+        leaveButton = CreateButton(panel.transform, "LeaveButton", "Leave Room", new Vector2(0.5f, 0.15f));
+        leaveButtonLabel = leaveButton.GetComponentInChildren<TextMeshProUGUI>();
     }
 
     private void TryBindSceneWidgets()
@@ -177,6 +257,311 @@ public class WaitingRoomUI : MonoBehaviour
                 startButton = found.GetComponent<Button>();
                 startButtonLabel = found.GetComponentInChildren<TextMeshProUGUI>();
             }
+        }
+
+        if (leaveButton == null)
+        {
+            var found = GameObject.Find("LeaveButton");
+            if (found != null)
+            {
+                leaveButton = found.GetComponent<Button>();
+                leaveButtonLabel = found.GetComponentInChildren<TextMeshProUGUI>();
+            }
+        }
+
+        if (previewStageRoot == null)
+        {
+            var found = GameObject.Find("PreviewStage");
+            if (found != null)
+            {
+                previewStageRoot = found.transform;
+            }
+        }
+
+        for (int i = 0; i < previewCameras.Length; i++)
+        {
+            if (previewCameras[i] == null)
+            {
+                var found = GameObject.Find($"PreviewCamera{i + 1}");
+                if (found != null)
+                {
+                    previewCameras[i] = found.GetComponent<Camera>();
+                }
+            }
+
+            if (previewActors[i] == null)
+            {
+                var found = GameObject.Find($"PreviewActor{i + 1}");
+                if (found != null)
+                {
+                    previewActors[i] = found;
+                }
+            }
+        }
+
+        for (int i = 0; i < slots.Length; i++)
+        {
+            slots[i] ??= new WaitingRoomSlotWidgets();
+            int slotNumber = i + 1;
+
+            if (slots[i].root == null)
+            {
+                var found = GameObject.Find($"PlayerSlot{slotNumber}");
+                if (found != null)
+                {
+                    slots[i].root = found.GetComponent<RectTransform>();
+                }
+            }
+
+            if (slots[i].portraitImage == null)
+            {
+                var found = GameObject.Find($"PlayerSlot{slotNumber}_Portrait");
+                if (found != null)
+                {
+                    slots[i].portraitImage = found.GetComponent<Image>();
+                }
+            }
+
+            if (slots[i].previewImage == null)
+            {
+                var found = GameObject.Find($"PlayerSlot{slotNumber}_Preview");
+                if (found != null)
+                {
+                    slots[i].previewImage = found.GetComponent<RawImage>();
+                }
+            }
+
+            if (slots[i].baseImage == null)
+            {
+                var found = GameObject.Find($"PlayerSlot{slotNumber}_Base");
+                if (found != null)
+                {
+                    slots[i].baseImage = found.GetComponent<Image>();
+                }
+            }
+
+            if (slots[i].nameText == null)
+            {
+                var found = GameObject.Find($"PlayerSlot{slotNumber}_Name");
+                if (found != null)
+                {
+                    slots[i].nameText = found.GetComponent<TextMeshProUGUI>();
+                }
+            }
+
+            if (slots[i].statusText == null)
+            {
+                var found = GameObject.Find($"PlayerSlot{slotNumber}_Status");
+                if (found != null)
+                {
+                    slots[i].statusText = found.GetComponent<TextMeshProUGUI>();
+                }
+            }
+        }
+    }
+
+    private void RefreshSlots()
+    {
+        if (waitingRoomState == null || slots == null)
+        {
+            return;
+        }
+
+        int capacity = waitingRoomState.GetSlotCapacity();
+
+        for (int i = 0; i < slots.Length; i++)
+        {
+            bool slotVisible = i < capacity;
+            if (slots[i].root != null)
+            {
+                slots[i].root.gameObject.SetActive(slotVisible);
+            }
+
+            if (slotVisible == false)
+            {
+                continue;
+            }
+
+            if (slots[i].previewImage != null)
+            {
+                slots[i].previewImage.gameObject.SetActive(false);
+            }
+
+            bool occupied = waitingRoomState.TryGetSlotInfo(i, out var player, out bool isReady);
+            bool isLocal = occupied && waitingRoomState.IsLocalPlayer(player);
+            bool isHostSlot = occupied && waitingRoomState.IsHostPlayer(player);
+
+            if (slots[i].portraitImage != null)
+            {
+                slots[i].portraitImage.color = occupied ? OccupiedPortraitColor : EmptyPortraitColor;
+            }
+
+            if (slots[i].baseImage != null)
+            {
+                slots[i].baseImage.color = occupied
+                    ? (isLocal ? LocalBaseColor : RemoteBaseColor)
+                    : EmptyBaseColor;
+            }
+
+            if (slots[i].nameText != null)
+            {
+                if (occupied == false)
+                {
+                    slots[i].nameText.text = "Empty";
+                }
+                else if (isLocal)
+                {
+                    slots[i].nameText.text = "You";
+                }
+                else
+                {
+                    slots[i].nameText.text = $"Player {player.PlayerId}";
+                }
+            }
+
+            if (slots[i].statusText != null)
+            {
+                if (occupied == false)
+                {
+                    slots[i].statusText.text = string.Empty;
+                }
+                else if (isHostSlot)
+                {
+                    slots[i].statusText.text = "Host";
+                }
+                else
+                {
+                    slots[i].statusText.text = isReady ? "In Room" : "Joining";
+                }
+            }
+        }
+    }
+
+    private void ConfigurePreviewStage()
+    {
+        if (previewCameras == null || previewActors == null)
+        {
+            return;
+        }
+
+        previewTextures = new RenderTexture[Mathf.Min(previewCameras.Length, slots.Length)];
+        int width = Mathf.Max(64, previewTextureSize.x);
+        int height = Mathf.Max(64, previewTextureSize.y);
+
+        for (int i = 0; i < previewTextures.Length; i++)
+        {
+            if (previewCameras[i] == null || slots[i] == null || slots[i].previewImage == null)
+            {
+                continue;
+            }
+
+            slots[i].previewImage.gameObject.SetActive(false);
+
+            var texture = new RenderTexture(width, height, 16, RenderTextureFormat.ARGB32);
+            texture.name = $"WaitingRoomPreview_{i + 1}";
+            texture.Create();
+            previewTextures[i] = texture;
+            previewCameras[i].targetTexture = texture;
+            previewCameras[i].enabled = true;
+            slots[i].previewImage.texture = texture;
+            slots[i].previewImage.color = Color.white;
+
+            SetupPreviewActor(i);
+        }
+    }
+
+    private void SetupPreviewActor(int index)
+    {
+        if (index < 0 || index >= previewActors.Length)
+        {
+            return;
+        }
+
+        GameObject actor = previewActors[index];
+        if (actor == null)
+        {
+            return;
+        }
+
+        actor.SetActive(true);
+
+        var appearance = actor.GetComponent<PlayerAppearance>();
+        if (appearance != null)
+        {
+            appearance.SetPreviewMode(true);
+        }
+
+        DisablePreviewBehaviour<PlayerElimination>(actor);
+        DisablePreviewBehaviour<StunGun>(actor);
+        DisablePreviewBehaviour<SpectatorController>(actor);
+        DisablePreviewBehaviour<CharacterController>(actor);
+        DisablePreviewBehaviour<StarterAssets.ThirdPersonController>(actor);
+        DisablePreviewBehaviour<BasicRigidBodyPush>(actor);
+        DisablePreviewBehaviour<StarterAssets.StarterAssetsInputs>(actor);
+        DisablePreviewBehaviour<PlayerInput>(actor);
+        DisablePreviewBehaviour<NetworkObject>(actor);
+        DisablePreviewBehaviour<FusionPlayerAvatar>(actor);
+        DisablePreviewBehaviour<FusionThirdPersonMotor>(actor);
+        DisablePreviewBehaviour<NetworkTransform>(actor);
+        DisablePreviewBehaviour<FusionThirdPersonCamera>(actor);
+        DisablePreviewBehaviour<PlayerRole>(actor);
+        DisablePreviewBehaviour<SpectatorSabotageController>(actor);
+        DisablePreviewBehaviour<NetworkObjectPrefabData>(actor);
+    }
+
+    private void RefreshPreviewActors()
+    {
+        if (waitingRoomState == null || previewActors == null)
+        {
+            return;
+        }
+
+        int capacity = waitingRoomState.GetSlotCapacity();
+        int localSkinIndex = SeekerSkinSelection.LoadSelectedSkinIndex();
+        bool localSkinChanged = localSkinIndex != lastLocalSkinIndex;
+        if (localSkinChanged)
+        {
+            lastLocalSkinIndex = localSkinIndex;
+        }
+
+        for (int i = 0; i < previewActors.Length; i++)
+        {
+            GameObject actor = previewActors[i];
+            if (actor == null)
+            {
+                continue;
+            }
+
+            PlayerRef player = default;
+            bool activeSlot = i < capacity && waitingRoomState.TryGetSlotInfo(i, out player, out _);
+            actor.SetActive(activeSlot);
+
+            if (activeSlot == false)
+            {
+                continue;
+            }
+
+            var appearance = actor.GetComponent<PlayerAppearance>();
+            if (appearance == null)
+            {
+                continue;
+            }
+
+            appearance.SetPreviewMode(true);
+            int skinIndex = waitingRoomState.IsLocalPlayer(player) ? localSkinIndex : 0;
+            if (localSkinChanged || waitingRoomState.IsLocalPlayer(player) == false)
+            {
+                appearance.SetPreviewSeekerSkinIndex(skinIndex);
+            }
+        }
+    }
+
+    private static void DisablePreviewBehaviour<T>(GameObject actor) where T : Component
+    {
+        var component = actor.GetComponent<T>();
+        if (component is UnityEngine.Behaviour behaviour)
+        {
+            behaviour.enabled = false;
         }
     }
 
