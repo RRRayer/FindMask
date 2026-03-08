@@ -62,7 +62,7 @@ jobs:
           targetPlatform: StandaloneWindows64
           unityVersion: auto
           buildName: FindMask
-          versioning: custom
+          versioning: Custom
           version: ${{ steps.version.outputs.version }}
 
       - name: Zip build artifacts
