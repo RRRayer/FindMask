@@ -1,0 +1,15 @@
+*.unity merge=unityyamlmerge
+*.prefab merge=unityyamlmerge
+*.asset merge=unityyamlmerge
+*.controller merge=unityyamlmerge
+*.anim merge=unityyamlmerge
+*.overrideController merge=unityyamlmerge
+*.physicMaterial merge=unityyamlmerge
+*.physicsMaterial2D merge=unityyamlmerge
+*.mat merge=unityyamlmerge
+*.mask merge=unityyamlmerge
+*.mesh merge=unityyamlmerge
+*.signal merge=unityyamlmerge
+*.playable merge=unityyamlmerge
+*.renderTexture merge=unityyamlmerge
+*.shadervariants merge=unityyamlmerge
