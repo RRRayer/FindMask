@@ -38,6 +38,9 @@ public class PlayerAppearance : MonoBehaviour
     private bool hasInitializedMask;
     private bool previewMode;
     private int previewSeekerSkinIndex;
+    private bool hasSeenGroupDance;
+    private bool wasGroupDanceActive;
+    private bool canPlayMaskChangeFx;
 
     private void Awake()
     {
@@ -57,6 +60,10 @@ public class PlayerAppearance : MonoBehaviour
 
     private void OnEnable()
     {
+        hasSeenGroupDance = false;
+        wasGroupDanceActive = false;
+        canPlayMaskChangeFx = false;
+
         if (stopDiscoEvent != null)
         {
             stopDiscoEvent.OnEventRaised += OnStopDiscoRequested;
@@ -78,6 +85,19 @@ public class PlayerAppearance : MonoBehaviour
 
     private void LateUpdate()
     {
+        bool isGroupDanceActive = DanceEventPublisher.IsGroupDanceActive;
+        if (isGroupDanceActive)
+        {
+            hasSeenGroupDance = true;
+        }
+
+        if (hasSeenGroupDance && wasGroupDanceActive && isGroupDanceActive == false)
+        {
+            canPlayMaskChangeFx = true;
+        }
+
+        wasGroupDanceActive = isGroupDanceActive;
+
         if (previewMode)
         {
             ApplyRoleVisual(true, previewSeekerSkinIndex);
@@ -103,7 +123,7 @@ public class PlayerAppearance : MonoBehaviour
         if (maskIndex != lastMaskIndex)
         {
             ApplyMaskVisual(maskIndex);
-            if (hasInitializedMask)
+            if (hasInitializedMask && canPlayMaskChangeFx)
             {
                 PlayMaskChangeFirework(maskIndex);
                 PlayMaskChangeSfx();
