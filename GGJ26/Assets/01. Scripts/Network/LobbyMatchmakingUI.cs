@@ -1515,8 +1515,8 @@ private void RefreshRoomModeUi()
         if (modeDescriptionText != null)
         {
             modeDescriptionText.text = selectedRoomMode == RoomMode.Classic
-                ? "클래식 모드는 일반 플레이어는 술래를 피해 달아나고, 술래는 모든 일반 플레이어를 잡는 모드입니다."
-                : "데스매치 모드는 특수 규칙으로 진행되는 이벤트 모드입니다.";
+                ? "술래를 피해 달아나세요!"
+                : "최후의 승자가 되세요!";
         }
     }
 
