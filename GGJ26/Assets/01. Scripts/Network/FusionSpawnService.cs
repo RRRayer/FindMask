@@ -337,6 +337,16 @@ public class FusionSpawnService : MonoBehaviour
 
     private NetworkObject GetPrefabForPlayer(PlayerRef player)
     {
+        if (GameModeRuntime.IsDeathmatch)
+        {
+            if (normalPrefab != null)
+            {
+                return normalPrefab;
+            }
+
+            return playerPrefab;
+        }
+
         if (roleService != null)
         {
             PlayerRef seeker = roleService.GetDeterministicSeeker(runner);
