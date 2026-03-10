@@ -44,6 +44,22 @@ public class UIResult : MonoBehaviour
         }
     }
 
+    public void ResetForNewRound()
+    {
+        if (ResultCanvas != null)
+        {
+            ResultCanvas.enabled = false;
+        }
+
+        foreach (var c in notResultCanvas)
+        {
+            if (c != null)
+            {
+                c.enabled = true;
+            }
+        }
+    }
+
     public void HideResult()
     {
         ResultCanvas.enabled = false;

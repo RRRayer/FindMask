@@ -9,11 +9,13 @@ public class WaitingRoomState : NetworkBehaviour, INetworkRunnerCallbacks
 
     [Networked, Capacity(4)] private NetworkArray<PlayerRef> players { get; }
     [Networked, Capacity(4)] private NetworkArray<NetworkBool> readyStates { get; }
+    [Networked, Capacity(4)] private NetworkArray<int> seekerSkinIndices { get; }
 
     public event Action<int, int, bool> ReadyStateChanged;
 
     private int lastReadyCount = -1;
     private int lastPlayerCount = -1;
+    private bool localSkinSubmitted;
 
     public bool IsHost => (Object != null && Object.HasStateAuthority) || (Runner != null && Runner.IsSharedModeMasterClient);
 
@@ -33,6 +35,8 @@ public class WaitingRoomState : NetworkBehaviour, INetworkRunnerCallbacks
         {
             InitializePlayers();
         }
+
+        TrySubmitLocalSkinSelection();
     }
 
     public override void Despawned(NetworkRunner runner, bool hasState)
@@ -42,6 +46,8 @@ public class WaitingRoomState : NetworkBehaviour, INetworkRunnerCallbacks
 
     private void Update()
     {
+        TrySubmitLocalSkinSelection();
+
         int playerCount = GetPlayerCountEffective();
         int readyCount = GetReadyCountEffective();
         bool allReady = IsAllReadyEffective(playerCount, readyCount);
@@ -101,6 +107,7 @@ public class WaitingRoomState : NetworkBehaviour, INetworkRunnerCallbacks
         {
             players.Set(i, default);
             readyStates.Set(i, false);
+            seekerSkinIndices.Set(i, 0);
         }
     }
 
@@ -145,6 +152,7 @@ public class WaitingRoomState : NetworkBehaviour, INetworkRunnerCallbacks
 
         players.Set(index, player);
         readyStates.Set(index, false);
+        seekerSkinIndices.Set(index, 0);
     }
 
     private void RemovePlayer(PlayerRef player)
@@ -157,6 +165,7 @@ public class WaitingRoomState : NetworkBehaviour, INetworkRunnerCallbacks
 
         players.Set(index, default);
         readyStates.Set(index, false);
+        seekerSkinIndices.Set(index, 0);
     }
 
     private void SetReadyInternal(PlayerRef player, bool ready)
@@ -218,6 +227,72 @@ public class WaitingRoomState : NetworkBehaviour, INetworkRunnerCallbacks
         return GetPlayerCountEffective();
     }
 
+    public int GetSlotCapacity()
+    {
+        if (Runner != null && Runner.SessionInfo.IsValid && Runner.SessionInfo.MaxPlayers > 0)
+        {
+            return Runner.SessionInfo.MaxPlayers;
+        }
+
+        if (launcher != null && launcher.MaxPlayers > 0)
+        {
+            return launcher.MaxPlayers;
+        }
+
+        return players.Length;
+    }
+
+    public bool TryGetSlotInfo(int slotIndex, out PlayerRef player, out bool isReady)
+    {
+        player = default;
+        isReady = false;
+
+        if (slotIndex < 0 || slotIndex >= players.Length)
+        {
+            return false;
+        }
+
+        player = players[slotIndex];
+        if (IsPlayerValid(player) == false)
+        {
+            player = default;
+            return false;
+        }
+
+        isReady = readyStates[slotIndex];
+        return true;
+    }
+
+    public int GetSlotSkinIndex(int slotIndex)
+    {
+        if (slotIndex < 0 || slotIndex >= seekerSkinIndices.Length)
+        {
+            return 0;
+        }
+
+        return Mathf.Max(0, seekerSkinIndices[slotIndex]);
+    }
+
+    public bool IsLocalPlayer(PlayerRef player)
+    {
+        return Runner != null && player == Runner.LocalPlayer;
+    }
+
+    public bool IsHostPlayer(PlayerRef player)
+    {
+        if (Runner == null || IsPlayerValid(player) == false)
+        {
+            return false;
+        }
+
+        if (Object != null && Object.IsValid)
+        {
+            return player == Object.StateAuthority;
+        }
+
+        return Runner.IsSharedModeMasterClient && player == Runner.LocalPlayer && IsHost;
+    }
+
     public int GetReadyCountPublic()
     {
         return GetReadyCountEffective();
@@ -226,8 +301,8 @@ public class WaitingRoomState : NetworkBehaviour, INetworkRunnerCallbacks
     public bool CanStartGame()
     {
         int playerCount = GetPlayerCountEffective();
-        int readyCount = GetReadyCountEffective();
-        return IsAllReadyEffective(playerCount, readyCount);
+        int minPlayers = launcher != null ? Mathf.Max(1, launcher.MinPlayersToStart) : 1;
+        return playerCount >= minPlayers;
     }
 
     private bool AllReady()
@@ -281,22 +356,29 @@ public class WaitingRoomState : NetworkBehaviour, INetworkRunnerCallbacks
     private bool IsAllReadyEffective(int playerCount, int readyCount)
     {
         int minPlayers = launcher != null ? Mathf.Max(1, launcher.MinPlayersToStart) : 1;
-        if (playerCount < minPlayers)
-        {
-            return false;
-        }
-
-        if (playerCount == 1)
-        {
-            return true;
-        }
-
-        return readyCount == playerCount;
+        return playerCount >= minPlayers;
     }
 
     private static bool IsPlayerValid(PlayerRef player)
     {
         return player.RawEncoded != 0;
+    }
+
+    private void TrySubmitLocalSkinSelection()
+    {
+        if (localSkinSubmitted || Runner == null)
+        {
+            return;
+        }
+
+        PlayerRef localPlayer = Runner.LocalPlayer;
+        if (IsPlayerValid(localPlayer) == false)
+        {
+            return;
+        }
+
+        RpcSetSkinIndex(localPlayer, SeekerSkinSelection.LoadSelectedSkinIndex());
+        localSkinSubmitted = true;
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
@@ -308,6 +390,27 @@ public class WaitingRoomState : NetworkBehaviour, INetworkRunnerCallbacks
         }
 
         SetReadyInternal(player, ready);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RpcSetSkinIndex(PlayerRef player, int skinIndex)
+    {
+        if (Object.HasStateAuthority == false)
+        {
+            return;
+        }
+
+        int index = FindIndex(player);
+        if (index < 0)
+        {
+            AddPlayer(player);
+            index = FindIndex(player);
+        }
+
+        if (index >= 0)
+        {
+            seekerSkinIndices.Set(index, Mathf.Max(0, skinIndex));
+        }
     }
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)

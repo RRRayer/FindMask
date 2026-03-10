@@ -247,6 +247,8 @@ public class GameManager : NetworkBehaviour
             Debug.LogWarning("[GameManager] uiCanvasManager was not assigned. Found by type.");
         }
 
+        ResetRoundUI();
+
         LockCursorForGameplay();
         if (resultController != null)
         {
@@ -552,6 +554,26 @@ public class GameManager : NetworkBehaviour
     private void OnGroupDanceActive(bool isActive)
     {
         isGroupDanceActive = isActive;
+    }
+
+    private void ResetRoundUI()
+    {
+        if (uiCanvasManager != null)
+        {
+            uiCanvasManager.ResetForNewRound();
+        }
+
+        var deadUI = FindFirstObjectByType<UIDead>();
+        if (deadUI != null)
+        {
+            deadUI.HideDeadUI();
+        }
+
+        var resultUI = FindFirstObjectByType<UIResult>();
+        if (resultUI != null)
+        {
+            resultUI.ResetForNewRound();
+        }
     }
 }
 

@@ -1,6 +1,5 @@
 using Fusion;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using System.Linq;
 
 public class FusionRoleAssignmentService : MonoBehaviour
@@ -41,14 +40,15 @@ public class FusionRoleAssignmentService : MonoBehaviour
             return lockedSeeker;
         }
 
-        // Stable random by session so all peers pick the same seeker.
-        int seed = sessionName.GetHashCode();
-        if (string.IsNullOrWhiteSpace(sessionName))
+        var playerStateManager = FindFirstObjectByType<PlayerStateManager>();
+        int seed = playerStateManager != null ? playerStateManager.GetOrCreateRoleSelectionSeed() : 0;
+        if (seed == 0)
         {
-            seed = SceneManager.GetActiveScene().path.GetHashCode();
+            return default;
         }
 
-        int index = Mathf.Abs(seed) % players.Count;
+        var random = new System.Random(seed);
+        int index = random.Next(players.Count);
         PlayerRef chosen = players[index];
 
         seekerLocked = true;

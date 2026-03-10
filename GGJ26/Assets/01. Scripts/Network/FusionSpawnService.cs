@@ -197,6 +197,11 @@ public class FusionSpawnService : MonoBehaviour
         {
             roleService.ResetAssignment();
         }
+
+        if (playerStateManager != null)
+        {
+            playerStateManager.ResetRoleSelectionSeed();
+        }
     }
 
     private IEnumerator WaitForSpawnPointsAndBuild()
@@ -342,9 +347,15 @@ public class FusionSpawnService : MonoBehaviour
             return playerPrefab;
         }
 
-        if (roleService != null && roleService.IsSeeker(runner, player))
+        if (roleService != null)
         {
-            if (seekerPrefab != null)
+            PlayerRef seeker = roleService.GetDeterministicSeeker(runner);
+            if (seeker == default)
+            {
+                return null;
+            }
+
+            if (seeker == player && seekerPrefab != null)
             {
                 return seekerPrefab;
             }

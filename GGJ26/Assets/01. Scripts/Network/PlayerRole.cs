@@ -160,9 +160,19 @@ public class PlayerRole : NetworkBehaviour
             return default;
         }
 
-        string sessionName = Runner.SessionInfo.IsValid ? Runner.SessionInfo.Name : string.Empty;
-        int seed = string.IsNullOrWhiteSpace(sessionName) ? 1337 : sessionName.GetHashCode();
-        int index = Mathf.Abs(seed) % players.Count;
+        if (playerStateManager == null)
+        {
+            playerStateManager = FindFirstObjectByType<PlayerStateManager>();
+        }
+
+        int seed = playerStateManager != null ? playerStateManager.GetOrCreateRoleSelectionSeed() : 0;
+        if (seed == 0)
+        {
+            return default;
+        }
+
+        var random = new System.Random(seed);
+        int index = random.Next(players.Count);
         return players[index];
     }
 

@@ -1466,6 +1466,9 @@ MonoBehaviour:
   npcDanceCommandRadius: 8
   npcDanceDuration: 2.5
   npcDanceCommandCooldown: 0.5
+  playSeekerSkillSfx: 1
+  seekerSkillSfxClip: {fileID: 8300000, guid: 4caa4012b6d8a3846aa06fbacf9ba911, type: 3}
+  seekerSkillSfxVolume: 1
 --- !u!114 &8096708549146426077
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1746,14 +1749,16 @@ MonoBehaviour:
   aimDistance: 60
   smokeSpawnForwardOffset: 5
   shoeProjectilePrefab: {fileID: 1077857044643151974, guid: d2b11640890aae846aa0fee9fe7029f3, type: 3}
+  shoeTemplateObjectName: Shoe
   shoeStunSeconds: 0.5
   shoeKnockbackSpeed: 2.4
-  shoeProjectileSpeed: 18
+  shoeProjectileSpeed: 24
   shoeProjectileLifetime: 1.2
-  shoeProjectileGravity: 9.8
+  shoeProjectileGravity: 4.2
   shoeSpawnForwardOffset: 0.8
   shoeHitRadius: 0.45
   shoeHitDistance: 22
+  shoeSpinDegreesPerSecond: {x: 1080, y: 540, z: 720}
   ghostSmokePrefab: {fileID: 5989128303339467817, guid: 8262abb744c274246a87fdf578f77f46, type: 3}
   ghostSmokeTemplateObjectName: SabotageGhostSmokeTemplate
   ghostSmokeLifetime: 10

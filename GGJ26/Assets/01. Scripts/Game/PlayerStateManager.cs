@@ -8,6 +8,7 @@ public class PlayerStateManager : NetworkBehaviour
     private readonly HashSet<string> pendingDeadPlayers = new HashSet<string>();
     private string localPlayerId;
     [SerializeField] private PlayerStateFallback fallback;
+    [Networked] private int RoleSelectionSeed { get; set; }
 
     public event System.Action<PlayerState> OnPlayerStateChanged;
     public event System.Action OnAllNonSeekersDead;
@@ -39,6 +40,7 @@ public class PlayerStateManager : NetworkBehaviour
     {
         if (Object != null && Object.HasStateAuthority)
         {
+            EnsureRoleSelectionSeed();
             if (fallback != null)
             {
                 fallback.FlushPendingNetworkOps();
@@ -73,6 +75,24 @@ public class PlayerStateManager : NetworkBehaviour
         }
 
         SendRegisterRpc(playerId, isSeeker);
+    }
+
+    public int GetOrCreateRoleSelectionSeed()
+    {
+        if (Object != null && Object.HasStateAuthority)
+        {
+            EnsureRoleSelectionSeed();
+        }
+
+        return RoleSelectionSeed;
+    }
+
+    public void ResetRoleSelectionSeed()
+    {
+        if (Object != null && Object.HasStateAuthority)
+        {
+            RoleSelectionSeed = 0;
+        }
     }
 
     public void MarkDeadNetworked(string playerId)
@@ -344,6 +364,18 @@ public class PlayerStateManager : NetworkBehaviour
         }
 
         return false;
+    }
+
+    private void EnsureRoleSelectionSeed()
+    {
+        if (RoleSelectionSeed != 0)
+        {
+            return;
+        }
+
+        var random = new System.Random();
+        RoleSelectionSeed = random.Next(1, int.MaxValue);
+        Debug.Log($"[PlayerStateManager] Generated role selection seed: {RoleSelectionSeed}");
     }
 
     private bool TryRecoverMissingPlayerState(string playerId, out PlayerState recovered)

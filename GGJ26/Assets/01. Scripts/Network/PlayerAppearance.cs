@@ -38,6 +38,9 @@ public class PlayerAppearance : MonoBehaviour
     private bool hasInitializedMask;
     private bool previewMode;
     private int previewSeekerSkinIndex;
+    private bool hasSeenGroupDance;
+    private bool wasGroupDanceActive;
+    private bool canPlayMaskChangeFx;
 
     private void Awake()
     {
@@ -57,6 +60,10 @@ public class PlayerAppearance : MonoBehaviour
 
     private void OnEnable()
     {
+        hasSeenGroupDance = false;
+        wasGroupDanceActive = false;
+        canPlayMaskChangeFx = false;
+
         if (stopDiscoEvent != null)
         {
             stopDiscoEvent.OnEventRaised += OnStopDiscoRequested;
@@ -78,6 +85,19 @@ public class PlayerAppearance : MonoBehaviour
 
     private void LateUpdate()
     {
+        bool isGroupDanceActive = DanceEventPublisher.IsGroupDanceActive;
+        if (isGroupDanceActive)
+        {
+            hasSeenGroupDance = true;
+        }
+
+        if (hasSeenGroupDance && wasGroupDanceActive && isGroupDanceActive == false)
+        {
+            canPlayMaskChangeFx = true;
+        }
+
+        wasGroupDanceActive = isGroupDanceActive;
+
         if (previewMode)
         {
             ApplyRoleVisual(true, previewSeekerSkinIndex);
@@ -103,7 +123,7 @@ public class PlayerAppearance : MonoBehaviour
         if (maskIndex != lastMaskIndex)
         {
             ApplyMaskVisual(maskIndex);
-            if (hasInitializedMask)
+            if (hasInitializedMask && canPlayMaskChangeFx)
             {
                 PlayMaskChangeFirework(maskIndex);
                 PlayMaskChangeSfx();
@@ -141,6 +161,7 @@ public class PlayerAppearance : MonoBehaviour
 
     public void SetPreviewSeekerSkinIndex(int index)
     {
+        EnsureSeekerMaskObjectsResolved();
         previewSeekerSkinIndex = index;
 
         if (previewMode)
@@ -151,6 +172,7 @@ public class PlayerAppearance : MonoBehaviour
 
     public int GetSeekerMaskCount()
     {
+        EnsureSeekerMaskObjectsResolved();
         return seekerMaskObjects != null ? seekerMaskObjects.Length : 0;
     }
 
@@ -312,6 +334,7 @@ public class PlayerAppearance : MonoBehaviour
 
     private void ApplySeekerMaskVisual(bool isSeeker, int seekerSkinIndex)
     {
+        EnsureSeekerMaskObjectsResolved();
         if (seekerMaskObjects == null || seekerMaskObjects.Length == 0)
         {
             return;
@@ -331,35 +354,72 @@ public class PlayerAppearance : MonoBehaviour
 
     private void AutoAssignSeekerMaskObjects()
     {
-        if (seekerMaskObjects != null && seekerMaskObjects.Length >= 2)
+        Transform head = FindSeekerHeadTransform();
+        if (head == null)
+        {
+            if (seekerMaskObjects == null || seekerMaskObjects.Length == 0)
+            {
+                seekerMaskObjects = new GameObject[1];
+            }
+            return;
+        }
+
+        GameObject dinosaur = FindChildByName(head, "Dinosaur");
+        GameObject horse = FindChildByName(head, "HorseMask");
+        GameObject paper = FindChildByName(head, "PaperMask");
+        GameObject tribal = FindChildByName(head, "TribalMask");
+
+        var list = new System.Collections.Generic.List<GameObject>(4);
+        if (dinosaur != null) list.Add(dinosaur);
+        if (horse != null) list.Add(horse);
+        if (paper != null) list.Add(paper);
+        if (tribal != null) list.Add(tribal);
+
+        if (list.Count == 0)
+        {
+            seekerMaskObjects = new GameObject[1];
+            return;
+        }
+
+        seekerMaskObjects = list.ToArray();
+    }
+
+    private void EnsureSeekerMaskObjectsResolved()
+    {
+        if (seekerMaskObjects != null && seekerMaskObjects.Length > 0)
         {
             return;
         }
 
+        AutoAssignSeekerMaskObjects();
+    }
+
+    private Transform FindSeekerHeadTransform()
+    {
         var transforms = GetComponentsInChildren<Transform>(true);
-        GameObject dinosaur = null;
         for (int i = 0; i < transforms.Length; i++)
         {
             var t = transforms[i];
-            if (t == null)
+            if (t != null && string.Equals(t.name, "Head", System.StringComparison.OrdinalIgnoreCase))
             {
-                continue;
-            }
-
-            if (string.Equals(t.gameObject.name, "Dinosaur", System.StringComparison.OrdinalIgnoreCase))
-            {
-                dinosaur = t.gameObject;
-                break;
+                return t;
             }
         }
 
-        if (dinosaur != null)
+        return null;
+    }
+
+    private static GameObject FindChildByName(Transform parent, string targetName)
+    {
+        for (int i = 0; i < parent.childCount; i++)
         {
-            seekerMaskObjects = new[] { dinosaur, null };
+            Transform child = parent.GetChild(i);
+            if (child != null && string.Equals(child.name, targetName, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return child.gameObject;
+            }
         }
-        else if (seekerMaskObjects == null || seekerMaskObjects.Length == 0)
-        {
-            seekerMaskObjects = new GameObject[2];
-        }
+
+        return null;
     }
 }
