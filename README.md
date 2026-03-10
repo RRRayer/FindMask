@@ -1,5 +1,3 @@
-![Alt](https://repobeats.axiom.co/api/embed/9a6afe0594d2ed6b72ceaacf76f810f29dd2a5ec.svg "Repobeats analytics image")
-
 # 프로젝트명
 Find Mask
 
@@ -573,3 +571,5 @@ Seeker Canvas 표시 관련 버그 수정
 - 로비-대기실-게임씬 UI 흐름 안정화
 - 사보타지 기능 네트워크 동기화 및 밸런스 보정
 - 설정/보이스/배포 파이프라인 통합 QA 진행
+
+![Alt](https://repobeats.axiom.co/api/embed/9a6afe0594d2ed6b72ceaacf76f810f29dd2a5ec.svg "Repobeats analytics image")
