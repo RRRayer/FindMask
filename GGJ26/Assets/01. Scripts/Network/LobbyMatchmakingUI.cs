@@ -1109,7 +1109,6 @@ private void SetRoomPanelMode(bool createMode)
     {
         string roomName = session.Name;
         string mode = RoomSessionNameCodec.DecodeMode(roomName);
-        string baseName = RoomSessionNameCodec.DecodeDisplayRoomName(roomName);
         if (RoomSessionNameCodec.HasPassword(roomName))
         {
             OpenPasswordJoinPopup(session);
@@ -1191,8 +1190,9 @@ private void SetRoomPanelMode(bool createMode)
             return;
         }
 
+        string mode = RoomSessionNameCodec.DecodeMode(pendingPasswordJoinSessionName);
         ClosePasswordJoinPopup();
-        launcher.StartMatchmaking(pendingPasswordJoinSessionName, pendingPasswordJoinMaxPlayers);
+        launcher.StartMatchmaking(pendingPasswordJoinSessionName, pendingPasswordJoinMaxPlayers, mode);
 
         if (popupRoot != null)
         {
@@ -1444,9 +1444,11 @@ private void ResolveMainMenuButtons()
 
     private string ResolveJoinSessionName(string roomName, string password)
     {
+        string selectedMode = selectedRoomMode == RoomMode.Deathmatch ? GameModeRuntime.Deathmatch : GameModeRuntime.Classic;
+
         if (launcher == null || launcher.CachedSessionList == null)
         {
-            return RoomSessionNameCodec.Encode(roomName, password, GameModeRuntime.Classic);
+            return RoomSessionNameCodec.Encode(roomName, password, selectedMode);
         }
 
         var sessions = launcher.CachedSessionList;
@@ -1459,7 +1461,7 @@ private void ResolveMainMenuButtons()
             }
         }
 
-        return RoomSessionNameCodec.Encode(roomName, password, GameModeRuntime.Classic);
+        return RoomSessionNameCodec.Encode(roomName, password, selectedMode);
     }
 
 private void RefreshRoomModeUi()
