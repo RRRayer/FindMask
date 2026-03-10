@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3c4d3a67a50d6e478b9b24ff5c9d86e, type: 3}
   m_Name: SeekerNpcDanceCommandSettingsSO
   m_EditorClassIdentifier: 
-  radius: 100
+  radius: 5
   duration: 2.5
-  cooldown: 0.5
+  cooldown: 5
