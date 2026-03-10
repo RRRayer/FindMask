@@ -800,10 +800,22 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9100000000000000010, guid: 076210ecccf349c99ea75e8cb774b089, type: 3}
       propertyPath: seekerMaskObjects.Array.size
-      value: 2
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 9100000000000000010, guid: 076210ecccf349c99ea75e8cb774b089, type: 3}
       propertyPath: 'seekerMaskObjects.Array.data[0]'
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 9100000000000000010, guid: 076210ecccf349c99ea75e8cb774b089, type: 3}
+      propertyPath: 'seekerMaskObjects.Array.data[2]'
+      value: 
+      objectReference: {fileID: 470992009}
+    - target: {fileID: 9100000000000000010, guid: 076210ecccf349c99ea75e8cb774b089, type: 3}
+      propertyPath: 'seekerMaskObjects.Array.data[3]'
+      value: 
+      objectReference: {fileID: 470992008}
+    - target: {fileID: 9100000000000000010, guid: 076210ecccf349c99ea75e8cb774b089, type: 3}
+      propertyPath: 'seekerMaskObjects.Array.data[4]'
       value: 
       objectReference: {fileID: 470992007}
     m_RemovedComponents: []
@@ -818,7 +830,17 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &470992007 stripped
 GameObject:
-  m_CorrespondingSourceObject: {fileID: 2077228438610097283, guid: 076210ecccf349c99ea75e8cb774b089, type: 3}
+  m_CorrespondingSourceObject: {fileID: 297862888002407028, guid: 076210ecccf349c99ea75e8cb774b089, type: 3}
+  m_PrefabInstance: {fileID: 470992005}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &470992008 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6061611895055065941, guid: 076210ecccf349c99ea75e8cb774b089, type: 3}
+  m_PrefabInstance: {fileID: 470992005}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &470992009 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1394481231352120806, guid: 076210ecccf349c99ea75e8cb774b089, type: 3}
   m_PrefabInstance: {fileID: 470992005}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &472597816
@@ -3869,6 +3891,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1173444122044969047, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: clickSfxClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 2f6b5599c5d47634bb1f37b8dbf4c5b0, type: 3}
     - target: {fileID: 1313023525087616186, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
       propertyPath: m_fontMaterial
       value: 
@@ -3885,6 +3911,10 @@ PrefabInstance:
       propertyPath: 'm_fontSharedMaterials.Array.data[0]'
       value: 
       objectReference: {fileID: 1893403078}
+    - target: {fileID: 1906092115782938955, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: clickSfxClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 2f6b5599c5d47634bb1f37b8dbf4c5b0, type: 3}
     - target: {fileID: 2103092376478397588, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -3969,6 +3999,34 @@ PrefabInstance:
       propertyPath: previewActorRoot
       value: 
       objectReference: {fileID: 470992006}
+    - target: {fileID: 3631521244784638965, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: skins.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 3631521244784638965, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: skins.Array.data[0].skinName
+      value: "\uACF5\uB8E1 \uAC00\uBA74"
+      objectReference: {fileID: 0}
+    - target: {fileID: 3631521244784638965, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: skins.Array.data[1].skinName
+      value: "\uB9D0 \uAC00\uBA74"
+      objectReference: {fileID: 0}
+    - target: {fileID: 3631521244784638965, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: skins.Array.data[2].skinName
+      value: "\uC885\uC774 \uAC00\uBA74"
+      objectReference: {fileID: 0}
+    - target: {fileID: 3631521244784638965, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: skins.Array.data[3].skinName
+      value: "\uB098\uBB34 \uAC00\uBA74"
+      objectReference: {fileID: 0}
+    - target: {fileID: 3631521244784638965, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: skins.Array.data[4].skinName
+      value: "\uB098\uBB34 \uAC00\uBA74"
+      objectReference: {fileID: 0}
+    - target: {fileID: 3698462560851030512, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: clickSfxClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 2f6b5599c5d47634bb1f37b8dbf4c5b0, type: 3}
     - target: {fileID: 3699691478526685263, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
       propertyPath: m_fontMaterial
       value: 
@@ -3997,6 +4055,10 @@ PrefabInstance:
       propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4189606450733373273, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: clickSfxClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 2f6b5599c5d47634bb1f37b8dbf4c5b0, type: 3}
     - target: {fileID: 4583891586769406104, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
       propertyPath: m_fontMaterial
       value: 
@@ -4013,6 +4075,10 @@ PrefabInstance:
       propertyPath: 'm_fontSharedMaterials.Array.data[0]'
       value: 
       objectReference: {fileID: 564439800}
+    - target: {fileID: 4628931454072858974, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: clickSfxClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 2f6b5599c5d47634bb1f37b8dbf4c5b0, type: 3}
     - target: {fileID: 4670182798008014642, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -4033,6 +4099,18 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5141103175817313757, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: clickSfxClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 2f6b5599c5d47634bb1f37b8dbf4c5b0, type: 3}
+    - target: {fileID: 5724181504257435055, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: clickSfxClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 2f6b5599c5d47634bb1f37b8dbf4c5b0, type: 3}
+    - target: {fileID: 6128677237753177748, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: clickSfxClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 2f6b5599c5d47634bb1f37b8dbf4c5b0, type: 3}
     - target: {fileID: 6309210451231866331, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -4093,6 +4171,10 @@ PrefabInstance:
       propertyPath: windowModeDropdownWrapper
       value: 
       objectReference: {fileID: 513865743}
+    - target: {fileID: 6837652995402955042, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: clickSfxClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 2f6b5599c5d47634bb1f37b8dbf4c5b0, type: 3}
     - target: {fileID: 7157335728196217413, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
       propertyPath: m_Name
       value: CanvasLobby
@@ -4113,6 +4195,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7368244500304458809, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: clickSfxClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 2f6b5599c5d47634bb1f37b8dbf4c5b0, type: 3}
     - target: {fileID: 7378874216843939466, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -4129,6 +4215,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8038258581466297199, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: clickSfxClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 2f6b5599c5d47634bb1f37b8dbf4c5b0, type: 3}
     - target: {fileID: 8057994762914373383, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -4149,6 +4239,14 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8413754215224600997, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: clickSfxClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 2f6b5599c5d47634bb1f37b8dbf4c5b0, type: 3}
+    - target: {fileID: 8786008662125939883, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: clickSfxClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 2f6b5599c5d47634bb1f37b8dbf4c5b0, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:

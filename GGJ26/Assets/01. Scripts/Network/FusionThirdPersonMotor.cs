@@ -28,6 +28,10 @@ public class FusionThirdPersonMotor : NetworkBehaviour
     [SerializeField] private float npcDanceDuration = 2.5f;
     // Seeker NPC 춤 명령 재사용 대기 시간입니다. (ScriptableObject 설정이 없을 경우 사용)
     [SerializeField] private float npcDanceCommandCooldown = 0.5f;
+    [Header("Seeker Skill SFX")]
+    [SerializeField] private bool playSeekerSkillSfx = true;
+    [SerializeField] private AudioClip seekerSkillSfxClip;
+    [SerializeField, Range(0f, 1f)] private float seekerSkillSfxVolume = 1f;
 
     // --- FIX: REMOVED [Networked] attribute from physics-related properties ---
     // These properties are now local to the State Authority.
@@ -107,6 +111,7 @@ public class FusionThirdPersonMotor : NetworkBehaviour
 
         // 씬에서 DanceEventPublisher 인스턴스를 찾아 참조합니다.
         danceEventPublisher = FindFirstObjectByType<DanceEventPublisher>();
+
     }
     
     // --- FIX: Added Spawned() to initialize render position ---
@@ -205,6 +210,7 @@ public class FusionThirdPersonMotor : NetworkBehaviour
         if (lockMovement == false && input.npcDanceCommand && role != null && role.IsSeeker && Runner.SimulationTime >= NextNpcDanceCommandTime)
         {
             NextNpcDanceCommandTime = Runner.SimulationTime + NpcDanceCooldown;
+            RpcPlaySeekerSkillSfx();
             // DanceEventPublisher가 없으면 씬에서 찾아 할당합니다.
             if (danceEventPublisher == null)
             {
@@ -464,6 +470,19 @@ public class FusionThirdPersonMotor : NetworkBehaviour
         return SabotageStunTimer.ExpiredOrNotRunning(Runner) == false;
     }
 
+    private void PlaySeekerSkillSfx()
+    {
+        if (playSeekerSkillSfx == false || seekerSkillSfxClip == null)
+        {
+            return;
+        }
+
+        AudioSource.PlayClipAtPoint(seekerSkillSfxClip, transform.position, seekerSkillSfxVolume);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcPlaySeekerSkillSfx()
+    {
+        PlaySeekerSkillSfx();
+    }
 }
-
-

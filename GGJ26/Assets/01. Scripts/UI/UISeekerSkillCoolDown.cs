@@ -9,31 +9,37 @@ public class UISeekerSkillCoolDown : MonoBehaviour
 
     [SerializeField]
     private SeekerNpcDanceCommandSettingsSO _seekerSkillSettings;
+    [SerializeField] private Sprite _skillIconSprite;
 
     private FusionThirdPersonMotor _localPlayerMotor;
     private float _cooldownDuration;
 
     private void Start()
-    {
-        if (_skillImage == null)
         {
-            _skillImage = GetComponent<Image>();
-        }
+            if (_skillImage == null)
+            {
+                _skillImage = GetComponent<Image>();
+            }
 
-        if (_skillImage != null)
-        {
-            // The user wants the image to be filled, so we ensure it is.
-            _skillImage.type = Image.Type.Filled;
-            // And it should be ready at the start.
-            _skillImage.fillAmount = 1f;
-        }
-        else
-        {
-            Debug.LogError("UISeekerSkillCoolDown: Image component is not assigned and could not be found.", this);
-            this.enabled = false;
-            return;
-        }
+            if (_skillImage != null)
+            {
+                if (_skillIconSprite != null)
+                {
+                    _skillImage.sprite = _skillIconSprite;
+                    _skillImage.preserveAspect = true;
+                }
 
+                // The user wants the image to be filled, so we ensure it is.
+                _skillImage.type = Image.Type.Filled;
+                // And it should be ready at the start.
+                _skillImage.fillAmount = 1f;
+            }
+            else
+            {
+                Debug.LogError("UISeekerSkillCoolDown: Image component is not assigned and could not be found.", this);
+                this.enabled = false;
+                return;
+            }
 
         if (_seekerSkillSettings != null)
         {
