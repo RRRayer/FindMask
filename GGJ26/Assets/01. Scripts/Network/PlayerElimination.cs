@@ -210,7 +210,7 @@ public class PlayerElimination : NetworkBehaviour
                 }
                 if (_playerRole != null && _playerRole.IsSeeker == false)
                 {
-                    var deadUI = FindFirstObjectByType<UIDead>();
+                    var deadUI = FindFirstObjectByType<UIDead>(FindObjectsInactive.Include);
                     if (deadUI != null)
                     {
                         deadUI.ShowDeadUI();

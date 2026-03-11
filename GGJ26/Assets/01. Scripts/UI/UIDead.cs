@@ -7,16 +7,17 @@ public class UIDead : MonoBehaviour
 
     public void HideDeadUI()
     {
-        if (CanvasDead != null)
+        GameObject deadObject = GetDeadObject();
+        if (deadObject != null)
         {
-            CanvasDead.enabled = false;
+            deadObject.SetActive(false);
         }
 
         foreach (var c in notDeadCanvas)
         {
             if (c != null)
             {
-                c.enabled = true;
+                c.gameObject.SetActive(true);
             }
         }
     }
@@ -28,13 +29,24 @@ public class UIDead : MonoBehaviour
         {
             if (c != null)
             {
-                c.enabled = false;
+                c.gameObject.SetActive(false);
             }
         }
 
+        GameObject deadObject = GetDeadObject();
+        if (deadObject != null)
+        {
+            deadObject.SetActive(true);
+        }
+    }
+
+    private GameObject GetDeadObject()
+    {
         if (CanvasDead != null)
         {
-            CanvasDead.enabled = true;
+            return CanvasDead.gameObject;
         }
+
+        return gameObject;
     }
 }

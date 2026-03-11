@@ -47,4 +47,12 @@ public class UICanvasManager : MonoBehaviour
 
         Debug.Log("Hider canvas enabled");
     }
+
+    public void SetHiderCanvasVisible(bool visible)
+    {
+        if (hiderCanvas != null)
+        {
+            hiderCanvas.enabled = visible;
+        }
+    }
 }
