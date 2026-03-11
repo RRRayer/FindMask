@@ -21,8 +21,11 @@ public class LobbyMatchmakingUI : MonoBehaviour
     [SerializeField] private UIGenericButton startButton;
     [SerializeField] private UIGenericButton publicButton;
     [SerializeField] private UIGenericButton changeSkinButton;
+    [SerializeField] private UIGenericButton settingsButton;
+    [SerializeField] private UIGenericButton howToPlayButton;
     [SerializeField] private UIGenericButton exitButton;
     [SerializeField] private UISkinSelectController skinSelectPanel;
+    [SerializeField] private UISettingManger settingManager;
     [SerializeField] private bool allowKeyboardStart = true;
     [SerializeField] private Key startKey = Key.Enter;
     [SerializeField] private string matchmakingMessage = "Matching...";
@@ -72,6 +75,14 @@ public class LobbyMatchmakingUI : MonoBehaviour
     [SerializeField] private Button passwordPopupConfirmButton;
     [SerializeField] private Button passwordPopupCloseButton;
 
+    [Header("How To Play UI")]
+    [SerializeField] private GameObject howToPlayPanelRoot;
+    [SerializeField] private Button howToPlayImageButton;
+    [SerializeField] private Image howToPlayImage;
+    [SerializeField] private Sprite[] howToPlayPages = new Sprite[0];
+    [SerializeField] private Color howToPlayOverlayColor = new Color(0f, 0f, 0f, 0.78f);
+    [SerializeField] private Vector2 howToPlayImageSize = new Vector2(1280f, 720f);
+
     private const string NicknameKey = "GGJ26.Nickname";
     private const string PrivateRoomSeparator = "#";
     private const string SessionIdSeparator = "@";
@@ -80,6 +91,20 @@ public class LobbyMatchmakingUI : MonoBehaviour
     private int escapeHandledFrame = -1;
     private string pendingPasswordJoinSessionName;
     private int pendingPasswordJoinMaxPlayers = 1;
+    private int currentHowToPlayPageIndex;
+
+    public bool IsRoomCreatePanelOpen => roomPanel != null && roomPanel.activeInHierarchy && roomPanelCreateMode;
+
+    public bool IsHowToPlayPanelOpen => howToPlayPanelRoot != null && howToPlayPanelRoot.activeInHierarchy;
+
+    public bool IsSkinKeyboardInputBlocked
+    {
+        get
+        {
+            bool isSettingsOpen = settingManager != null && settingManager.IsOpen;
+            return IsEscapeBlockingPanelOpen || IsHowToPlayPanelOpen || isSettingsOpen;
+        }
+    }
 
     public bool IsEscapeBlockingPanelOpen
     {
@@ -123,6 +148,8 @@ public class LobbyMatchmakingUI : MonoBehaviour
         RefreshRoomModeUi();
         ResetCreateRoomDefaults();
         UpdatePasswordVisibility();
+        EnsureSettingsManager();
+        EnsureHowToPlayPopup();
 
         if (popupRoot != null)
         {
@@ -132,6 +159,11 @@ public class LobbyMatchmakingUI : MonoBehaviour
         if (passwordPopupRoot != null)
         {
             passwordPopupRoot.SetActive(false);
+        }
+
+        if (howToPlayPanelRoot != null)
+        {
+            howToPlayPanelRoot.SetActive(false);
         }
 
         LoadNickname();
@@ -157,6 +189,16 @@ private void OnEnable()
         if (changeSkinButton != null)
         {
             changeSkinButton.Clicked += OpenSkinPopup;
+        }
+
+        if (settingsButton != null)
+        {
+            settingsButton.Clicked += OpenSettingsPopup;
+        }
+
+        if (howToPlayButton != null)
+        {
+            howToPlayButton.Clicked += OpenHowToPlayPopup;
         }
 
         if (publicRoomCloseButton != null)
@@ -202,6 +244,11 @@ private void OnEnable()
         if (passwordPopupCloseButton != null)
         {
             passwordPopupCloseButton.onClick.AddListener(ClosePasswordJoinPopup);
+        }
+
+        if (howToPlayImageButton != null)
+        {
+            howToPlayImageButton.onClick.AddListener(AdvanceHowToPlayPage);
         }
 
         if (modeToggleButton != null)
@@ -255,6 +302,16 @@ private void OnDisable()
             changeSkinButton.Clicked -= OpenSkinPopup;
         }
 
+        if (settingsButton != null)
+        {
+            settingsButton.Clicked -= OpenSettingsPopup;
+        }
+
+        if (howToPlayButton != null)
+        {
+            howToPlayButton.Clicked -= OpenHowToPlayPopup;
+        }
+
         if (publicRoomCloseButton != null)
         {
             publicRoomCloseButton.onClick.RemoveListener(ClosePublicRoomPanel);
@@ -300,6 +357,11 @@ private void OnDisable()
             passwordPopupCloseButton.onClick.RemoveListener(ClosePasswordJoinPopup);
         }
 
+        if (howToPlayImageButton != null)
+        {
+            howToPlayImageButton.onClick.RemoveListener(AdvanceHowToPlayPage);
+        }
+
         if (modeToggleButton != null)
         {
             modeToggleButton.onClick.RemoveListener(ToggleRoomMode);
@@ -340,6 +402,11 @@ private void OnDisable()
         if (passwordPopupRoot != null)
         {
             passwordPopupRoot.SetActive(false);
+        }
+
+        if (howToPlayPanelRoot != null)
+        {
+            howToPlayPanelRoot.SetActive(false);
         }
     }
 
@@ -430,6 +497,36 @@ private void JoinRoom()
         if (skinSelectPanel != null)
         {
             skinSelectPanel.Open();
+        }
+    }
+
+    private void OpenSettingsPopup()
+    {
+        EnsureSettingsManager();
+        if (settingManager == null)
+        {
+            Debug.LogWarning("[LobbyMatchmakingUI] Setting manager is missing.");
+            return;
+        }
+
+        settingManager.OpenFromMenu();
+    }
+
+    private void OpenHowToPlayPopup()
+    {
+        EnsureHowToPlayPopup();
+        if (howToPlayPages == null || howToPlayPages.Length == 0)
+        {
+            Debug.LogWarning("[LobbyMatchmakingUI] How-to-play pages are not assigned.");
+            return;
+        }
+
+        currentHowToPlayPageIndex = 0;
+        RefreshHowToPlayPage();
+        if (howToPlayPanelRoot != null)
+        {
+            howToPlayPanelRoot.SetActive(true);
+            howToPlayPanelRoot.transform.SetAsLastSibling();
         }
     }
 
@@ -735,6 +832,20 @@ private void SetRoomPanelMode(bool createMode)
         if (publicRoomPanel != null && publicRoomPanel.activeInHierarchy)
         {
             ClosePublicRoomPanel();
+            escapeHandledFrame = Time.frameCount;
+            return;
+        }
+
+        if (IsHowToPlayPanelOpen)
+        {
+            CloseHowToPlayPopup();
+            escapeHandledFrame = Time.frameCount;
+            return;
+        }
+
+        if (settingManager != null && settingManager.IsOpen)
+        {
+            settingManager.Close();
             escapeHandledFrame = Time.frameCount;
             return;
         }
@@ -1300,6 +1411,20 @@ private void ResolveMainMenuButtons()
             }
         }
 
+        if (settingsButton == null)
+        {
+            settingsButton = FindButtonByName("BtnSetting");
+            if (settingsButton == null)
+            {
+                settingsButton = FindButtonByName("BtnSettings");
+            }
+        }
+
+        if (howToPlayButton == null)
+        {
+            howToPlayButton = FindButtonByName("BtnHowtoPlay");
+        }
+
         if (skinSelectPanel == null)
         {
             skinSelectPanel = FindObjectByName<UISkinSelectController>("SkinSelectPanel");
@@ -1344,6 +1469,135 @@ private void ResolveMainMenuButtons()
             if (candidate != null && candidate.gameObject.name == objectName)
             {
                 return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private void EnsureSettingsManager()
+    {
+        if (settingManager != null)
+        {
+            return;
+        }
+
+        settingManager = FindFirstObjectByType<UISettingManger>(FindObjectsInactive.Include);
+        if (settingManager == null)
+        {
+            settingManager = gameObject.GetComponent<UISettingManger>();
+        }
+
+        if (settingManager == null)
+        {
+            settingManager = gameObject.AddComponent<UISettingManger>();
+        }
+    }
+
+    private void EnsureHowToPlayPopup()
+    {
+        if (howToPlayPanelRoot == null)
+        {
+            Canvas targetCanvas = FindRootCanvas();
+            if (targetCanvas == null)
+            {
+                return;
+            }
+
+            GameObject panelObject = new GameObject("HowToPlayPanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            panelObject.transform.SetParent(targetCanvas.transform, false);
+
+            RectTransform panelRect = panelObject.GetComponent<RectTransform>();
+            panelRect.anchorMin = Vector2.zero;
+            panelRect.anchorMax = Vector2.one;
+            panelRect.offsetMin = Vector2.zero;
+            panelRect.offsetMax = Vector2.zero;
+
+            Image panelImage = panelObject.GetComponent<Image>();
+            panelImage.color = howToPlayOverlayColor;
+            panelImage.raycastTarget = true;
+
+            howToPlayPanelRoot = panelObject;
+
+            GameObject imageButtonObject = new GameObject("HowToPlayImageButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            imageButtonObject.transform.SetParent(panelObject.transform, false);
+
+            RectTransform imageRect = imageButtonObject.GetComponent<RectTransform>();
+            imageRect.anchorMin = new Vector2(0.5f, 0.5f);
+            imageRect.anchorMax = new Vector2(0.5f, 0.5f);
+            imageRect.pivot = new Vector2(0.5f, 0.5f);
+            imageRect.sizeDelta = howToPlayImageSize;
+            imageRect.anchoredPosition = Vector2.zero;
+
+            howToPlayImage = imageButtonObject.GetComponent<Image>();
+            howToPlayImage.color = Color.white;
+            howToPlayImage.preserveAspect = true;
+            howToPlayImage.raycastTarget = true;
+
+            howToPlayImageButton = imageButtonObject.GetComponent<Button>();
+            howToPlayImageButton.transition = Selectable.Transition.None;
+
+            howToPlayPanelRoot.SetActive(false);
+        }
+
+        if (howToPlayImageButton == null && howToPlayPanelRoot != null)
+        {
+            howToPlayImageButton = howToPlayPanelRoot.GetComponentInChildren<Button>(true);
+        }
+
+        if (howToPlayImage == null && howToPlayImageButton != null)
+        {
+            howToPlayImage = howToPlayImageButton.GetComponent<Image>();
+        }
+    }
+
+    private void RefreshHowToPlayPage()
+    {
+        if (howToPlayImage == null || howToPlayPages == null || howToPlayPages.Length == 0)
+        {
+            return;
+        }
+
+        currentHowToPlayPageIndex = Mathf.Clamp(currentHowToPlayPageIndex, 0, howToPlayPages.Length - 1);
+        howToPlayImage.sprite = howToPlayPages[currentHowToPlayPageIndex];
+        howToPlayImage.enabled = howToPlayImage.sprite != null;
+    }
+
+    private void AdvanceHowToPlayPage()
+    {
+        if (howToPlayPages == null || howToPlayPages.Length == 0)
+        {
+            CloseHowToPlayPopup();
+            return;
+        }
+
+        if (currentHowToPlayPageIndex >= howToPlayPages.Length - 1)
+        {
+            CloseHowToPlayPopup();
+            return;
+        }
+
+        currentHowToPlayPageIndex++;
+        RefreshHowToPlayPage();
+    }
+
+    private void CloseHowToPlayPopup()
+    {
+        if (howToPlayPanelRoot != null)
+        {
+            howToPlayPanelRoot.SetActive(false);
+        }
+    }
+
+    private Canvas FindRootCanvas()
+    {
+        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < canvases.Length; i++)
+        {
+            Canvas canvas = canvases[i];
+            if (canvas != null && canvas.isRootCanvas)
+            {
+                return canvas;
             }
         }
 

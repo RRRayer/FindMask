@@ -60,6 +60,7 @@ public class UISkinSelectController : MonoBehaviour
     private float nextRuntimeApplyTime;
     private bool previewInputDisabled;
     private bool lobbyInputPrepared;
+    private LobbyMatchmakingUI lobbyMatchmakingUI;
     private RenderTexture previewRenderTexture;
     private bool ownsPreviewTexture;
 
@@ -178,6 +179,11 @@ public class UISkinSelectController : MonoBehaviour
         if (alwaysOpenInLobby)
         {
             ForceLobbyCursorUnlocked();
+        }
+
+        if (alwaysOpenInLobby && IsLobbyKeyboardInputBlocked())
+        {
+            return;
         }
 
         if (WasPressedThisFrame(prevKey) || WasPressedThisFrame(prevAltKey))
@@ -545,6 +551,16 @@ public class UISkinSelectController : MonoBehaviour
         }
 
         lobbyInputPrepared = true;
+    }
+
+    private bool IsLobbyKeyboardInputBlocked()
+    {
+        if (lobbyMatchmakingUI == null)
+        {
+            lobbyMatchmakingUI = FindFirstObjectByType<LobbyMatchmakingUI>(FindObjectsInactive.Include);
+        }
+
+        return lobbyMatchmakingUI != null && lobbyMatchmakingUI.IsSkinKeyboardInputBlocked;
     }
 
     private void SetupRenderTexturePreview()
