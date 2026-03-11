@@ -162,7 +162,7 @@ public class GameManager : NetworkBehaviour
                     Debug.Log($"[GameManager] Local player death state received. IsSeeker={updatedState.IsSeeker}");
                     if (updatedState.IsSeeker == false)
                     {
-                        var deadUI = FindFirstObjectByType<UIDead>();
+                        var deadUI = FindFirstObjectByType<UIDead>(FindObjectsInactive.Include);
                         if (deadUI != null)
                         {
                             deadUI.ShowDeadUI();
@@ -554,6 +554,35 @@ public class GameManager : NetworkBehaviour
     private void OnGroupDanceActive(bool isActive)
     {
         isGroupDanceActive = isActive;
+
+        if (uiCanvasManager == null || playerStateManager == null)
+        {
+            return;
+        }
+
+        if (playerStateManager.TryGetLocalPlayer(out var localState) == false)
+        {
+            return;
+        }
+
+        if (localState.IsDead)
+        {
+            return;
+        }
+
+        if (localState.IsSeeker)
+        {
+            return;
+        }
+
+        if (isActive)
+        {
+            uiCanvasManager.SetHiderCanvasVisible(false);
+        }
+        else
+        {
+            uiCanvasManager.EnableHiderCanvas();
+        }
     }
 
     private void ResetRoundUI()
@@ -563,7 +592,7 @@ public class GameManager : NetworkBehaviour
             uiCanvasManager.ResetForNewRound();
         }
 
-        var deadUI = FindFirstObjectByType<UIDead>();
+        var deadUI = FindFirstObjectByType<UIDead>(FindObjectsInactive.Include);
         if (deadUI != null)
         {
             deadUI.HideDeadUI();

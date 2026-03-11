@@ -74,21 +74,8 @@ public class UISpectatorSabotageHud : MonoBehaviour
             return;
         }
 
-        var rootObject = new GameObject(RootName, typeof(RectTransform));
-        rootObject.transform.SetParent(transform, false);
-        root = rootObject.GetComponent<RectTransform>();
-        root.anchorMin = new Vector2(0.5f, 0f);
-        root.anchorMax = new Vector2(0.5f, 0f);
-        root.pivot = new Vector2(0.5f, 0f);
-        root.anchoredPosition = rootAnchoredPosition;
-        root.sizeDelta = new Vector2(slotSpacing * 2f + iconSize.x, iconSize.y + 80f);
-
-        titleLabel = CreateTitle(root);
-
-        slots = new SlotView[3];
-        slots[0] = CreateSlot(root, "ShoeSlot", shoeSprite, keyOneSprite, -slotSpacing, "1");
-        slots[1] = CreateSlot(root, "SmokeSlot", smokeSprite, keyTwoSprite, 0f, "2");
-        slots[2] = CreateSlot(root, "DanceSlot", danceSprite, keyThreeSprite, slotSpacing, "3");
+        Debug.LogWarning("[UISpectatorSabotageHud] SabotageHudRuntime is not wired in the scene. Runtime creation is disabled.", this);
+        enabled = false;
     }
 
     private SlotView[] CollectExistingSlots(RectTransform parent)
