@@ -826,6 +826,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gameScenePath: Assets/00. Scenes/GameScene.unity
+  deathmatchScenePath: Assets/00. Scenes/DeathMatchGameScene.unity
   waitingRoomScenePath: Assets/00. Scenes/WaitingRoom.unity
   ensureFusionVoiceClient: 1
   voiceAutoConnectAndJoin: 0
@@ -1321,7 +1322,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2802041281266178900, guid: 149c386dd16d9bd479235744cc8fa9b6, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3231847162756844652, guid: 149c386dd16d9bd479235744cc8fa9b6, type: 3}
       propertyPath: m_Name
