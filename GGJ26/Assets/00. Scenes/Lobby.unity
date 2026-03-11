@@ -512,7 +512,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Path: {fileID: 574659247}
-  m_PathPosition: 3.5229394
+  m_PathPosition: 3.5456285
   m_PositionUnits: 0
   m_PathOffset: {x: 0, y: 0, z: 0}
   m_XDamping: 0
@@ -710,8 +710,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 371226636}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.2346182, y: 0.39889705, z: -0.106341876, w: 0.8800721}
-  m_LocalPosition: {x: -4.5089183, y: 4.0455256, z: -3.9520862}
+  m_LocalRotation: {x: 0.22454716, y: 0.40017107, z: -0.10180354, w: 0.88265383}
+  m_LocalPosition: {x: -4.247977, y: 4.0455256, z: -4.2428217}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -959,15 +959,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3893294197879345259, guid: 076210ecccf349c99ea75e8cb774b089, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -2.45
+      value: -2.37
       objectReference: {fileID: 0}
     - target: {fileID: 3893294197879345259, guid: 076210ecccf349c99ea75e8cb774b089, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.25
+      value: 1.53
       objectReference: {fileID: 0}
     - target: {fileID: 3893294197879345259, guid: 076210ecccf349c99ea75e8cb774b089, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -3.48
+      value: -3.78
       objectReference: {fileID: 0}
     - target: {fileID: 3893294197879345259, guid: 076210ecccf349c99ea75e8cb774b089, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1486,8 +1486,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 496710720}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.23461817, y: 0.39889717, z: -0.10634189, w: 0.88007206}
-  m_LocalPosition: {x: -4.5089183, y: 4.0455256, z: -3.9520862}
+  m_LocalRotation: {x: 0.22454718, y: 0.4001711, z: -0.10180356, w: 0.8826538}
+  m_LocalPosition: {x: -4.247977, y: 4.0455256, z: -4.2428217}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2053,10 +2053,10 @@ MonoBehaviour:
   howToPlayImageButton: {fileID: 0}
   howToPlayImage: {fileID: 0}
   howToPlayPages:
-  - {fileID: 21300000, guid: a862951bada00cc4bac9c356170e54a3, type: 3}
-  - {fileID: 21300000, guid: e0fa028ebb8ea8a4b959fc2dc9a5a88e, type: 3}
-  - {fileID: 21300000, guid: 3b3783fed39b2de47814733e63e92883, type: 3}
-  - {fileID: 21300000, guid: bf6022cee50cc534fa056f2b33edfcec, type: 3}
+  - {fileID: 21300000, guid: 9833421e4f5a2bf4984d616e23b99460, type: 3}
+  - {fileID: 21300000, guid: ba35a6d33b941d24485e09868997bd32, type: 3}
+  - {fileID: 21300000, guid: add085a2a8bf5704c8b2a9547860cabd, type: 3}
+  - {fileID: 21300000, guid: 3fde0c46c0d3f944fb44d09fc3b1249e, type: 3}
   howToPlayOverlayColor: {r: 0, g: 0, b: 0, a: 0.78}
   howToPlayImageSize: {x: 1280, y: 720}
 --- !u!4 &613837319
