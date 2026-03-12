@@ -116,10 +116,12 @@ public class NPCController : NetworkBehaviour
     [Networked] private float NetVerticalVelocity { get; set; }
     [Networked] public NetworkBool IsDead { get; private set; }
     [Networked] private NetworkBool IsDancing { get; set; }
+    [Networked] private TickTimer SabotageStunTimer { get; set; }
     private bool snappedToGroundOnDeath;
     private bool hasSpawned;
     private float deathGroundSnapUntilTime;
     private float nextDeathGroundSnapTime;
+    private Vector3 sabotageKnockbackVelocity;
 
     private void Start()
     {
@@ -194,6 +196,37 @@ public class NPCController : NetworkBehaviour
 
         if (animator == null)
         {
+            return;
+        }
+
+        if (IsSabotageStunned())
+        {
+            if (CanUseAgent)
+            {
+                agent.isStopped = true;
+            }
+
+            moveDirection = Vector3.zero;
+            GroundedCheck();
+            JumpAndGravity(deltaTime);
+
+            Vector3 horizontal = sabotageKnockbackVelocity;
+            horizontal.y = 0f;
+            controller.Move((horizontal + new Vector3(0f, verticalVelocity, 0f)) * deltaTime);
+            sabotageKnockbackVelocity = Vector3.Lerp(sabotageKnockbackVelocity, Vector3.zero, deltaTime * 10f);
+
+            animationBlend = horizontal.magnitude;
+            animator.SetFloat(animIDSpeed, animationBlend);
+            animator.SetFloat(animIDMotionSpeed, horizontal.sqrMagnitude > 0.0001f ? 1f : 0f);
+
+            if (Object != null && Object.HasStateAuthority)
+            {
+                NetAnimSpeed = animationBlend;
+                NetAnimMotionSpeed = horizontal.sqrMagnitude > 0.0001f ? 1f : 0f;
+                NetAnimGrounded = Grounded;
+                NetVerticalVelocity = verticalVelocity;
+            }
+
             return;
         }
 
@@ -397,6 +430,58 @@ public class NPCController : NetworkBehaviour
             return true;
         }
         return false;
+    }
+
+    public void RequestSabotageStun(float durationSeconds, Vector3 knockbackDirection, float knockbackSpeed)
+    {
+        if (Object == null)
+        {
+            return;
+        }
+
+        if (Object.HasStateAuthority)
+        {
+            ApplySabotageStunInternal(durationSeconds, knockbackDirection, knockbackSpeed);
+            return;
+        }
+
+        RpcRequestSabotageStun(durationSeconds, knockbackDirection, knockbackSpeed);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RpcRequestSabotageStun(float durationSeconds, Vector3 knockbackDirection, float knockbackSpeed)
+    {
+        ApplySabotageStunInternal(durationSeconds, knockbackDirection, knockbackSpeed);
+    }
+
+    private void ApplySabotageStunInternal(float durationSeconds, Vector3 knockbackDirection, float knockbackSpeed)
+    {
+        if (Object == null || Object.HasStateAuthority == false || Runner == null || IsDead)
+        {
+            return;
+        }
+
+        float clampedDuration = Mathf.Clamp(durationSeconds, 0.05f, 2f);
+        SabotageStunTimer = TickTimer.CreateFromSeconds(Runner, clampedDuration);
+
+        Vector3 dir = knockbackDirection;
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 0.0001f)
+        {
+            dir = transform.forward;
+        }
+
+        sabotageKnockbackVelocity = dir.normalized * Mathf.Max(0f, knockbackSpeed);
+    }
+
+    private bool IsSabotageStunned()
+    {
+        if (Runner == null)
+        {
+            return false;
+        }
+
+        return SabotageStunTimer.ExpiredOrNotRunning(Runner) == false;
     }
 
     public void StartDance(int danceIndex)

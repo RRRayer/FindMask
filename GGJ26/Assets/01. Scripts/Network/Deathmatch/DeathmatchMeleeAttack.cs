@@ -58,6 +58,11 @@ public class DeathmatchMeleeAttack : NetworkBehaviour
             return;
         }
 
+        if (motor != null && motor.IsDanceLocked)
+        {
+            return;
+        }
+
         if (WasAttackPressedThisFrame() == false)
         {
             return;
@@ -196,6 +201,11 @@ public class DeathmatchMeleeAttack : NetworkBehaviour
         }
 
         if (elimination != null && elimination.Object != null && elimination.Object.IsValid && elimination.IsEliminated)
+        {
+            return false;
+        }
+
+        if (motor != null && motor.IsDanceLocked)
         {
             return false;
         }
