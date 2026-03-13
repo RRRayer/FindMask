@@ -4504,6 +4504,22 @@ PrefabInstance:
       propertyPath: 'm_fontSharedMaterials.Array.data[0]'
       value: 
       objectReference: {fileID: 1893403078}
+    - target: {fileID: 1559650123334622070, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: m_fontColor.b
+      value: 0.7226415
+      objectReference: {fileID: 0}
+    - target: {fileID: 1559650123334622070, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: m_fontColor.g
+      value: 0.9793531
+      objectReference: {fileID: 0}
+    - target: {fileID: 1559650123334622070, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: m_fontColor.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1559650123334622070, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4290312959
+      objectReference: {fileID: 0}
     - target: {fileID: 1906092115782938955, guid: d8790d17699e6614db16a6c30df9c4bf, type: 3}
       propertyPath: clickSfxClip
       value: 

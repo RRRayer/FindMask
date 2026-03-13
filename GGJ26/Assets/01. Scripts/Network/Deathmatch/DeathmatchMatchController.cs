@@ -338,16 +338,10 @@ public class DeathmatchMatchController : NetworkBehaviour
             return;
         }
 
-        if (aliveCount > 1)
+        if (aliveCount <= 0)
         {
-            if (NetRemainingSeconds <= 0f)
-            {
-                ResolveTieBreakerAtTimeout();
-            }
-            return;
+            ResolveTieBreakerAtTimeout();
         }
-
-        ResolveTieBreakerAtTimeout();
     }
 
     private void ResolveTieBreakerAtTimeout()
