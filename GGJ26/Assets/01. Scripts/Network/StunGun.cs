@@ -40,6 +40,7 @@ public class StunGun : NetworkBehaviour
     private float lastFireTime = -999f;
     private Camera mainCamera;
     private PlayerElimination elimination;
+    private FusionThirdPersonMotor motor;
     private Animator animator;
     private int animIDShoot;
     private bool rotateToCamera;
@@ -57,6 +58,7 @@ public class StunGun : NetworkBehaviour
         role = GetComponent<PlayerRole>();
         mainCamera = Camera.main;
         elimination = GetComponent<PlayerElimination>();
+        motor = GetComponent<FusionThirdPersonMotor>();
         animator = GetComponent<Animator>();
         animIDShoot = Animator.StringToHash("Shoot");
         if (shootTransform == null)
@@ -114,6 +116,11 @@ public class StunGun : NetworkBehaviour
         UpdateCrosshair();
 
         if (role != null && role.IsSeeker == false)
+        {
+            return;
+        }
+
+        if (motor != null && motor.IsDanceLocked)
         {
             return;
         }
