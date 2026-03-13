@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1 &68117484504569631
 GameObject:
@@ -1022,8 +1022,6 @@ MonoBehaviour:
   GroundLayers:
     serializedVersion: 2
     m_Bits: 1
-  _IsDead:
-    _value: 0
 --- !u!195 &8452156116356469170
 NavMeshAgent:
   m_ObjectHideFlags: 0
