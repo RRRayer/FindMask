@@ -45,6 +45,7 @@ public class FusionThirdPersonMotor : NetworkBehaviour
     [Networked] private int NetDanceIndex { get; set; }
     [Networked] private TickTimer SabotageStunTimer { get; set; }
     [Networked] private TickTimer MeleeMoveLockTimer { get; set; }
+    [Networked] private TickTimer ForcedDanceTimer { get; set; }
 
     private CharacterController controller;
     private Animator animator;
@@ -114,6 +115,8 @@ public class FusionThirdPersonMotor : NetworkBehaviour
         danceEventPublisher = FindFirstObjectByType<DanceEventPublisher>();
 
     }
+
+    public bool IsDanceLocked => NetIsDancing || IsForcedDanceActive();
     
     // --- FIX: Added Spawned() to initialize render position ---
     public override void Spawned()
@@ -196,7 +199,7 @@ public class FusionThirdPersonMotor : NetworkBehaviour
 
         if (GetInput(out PlayerInputData input) == false)
         {
-            if (NetIsDancing)
+            if (NetIsDancing && IsForcedDanceActive() == false)
             {
                 NetIsDancing = false;
                 ApplyDanceStop();
@@ -206,6 +209,7 @@ public class FusionThirdPersonMotor : NetworkBehaviour
             return;
         }
 
+        bool forcedDanceActive = IsForcedDanceActive();
         bool lockMovement = (GameManager.Instance != null && GameManager.Instance.IsGroupDanceActive) || IsMeleeMoveLocked();
         // Seeker NPC dance command (disabled during group dance).
         if (lockMovement == false && input.npcDanceCommand && role != null && role.IsSeeker && Runner.SimulationTime >= NextNpcDanceCommandTime)
@@ -226,7 +230,7 @@ public class FusionThirdPersonMotor : NetworkBehaviour
         }
 
         // Hold-to-dance (edge-triggered to avoid retriggering every tick).
-        if (input.danceIndex != lastDanceIndex)
+        if (forcedDanceActive == false && input.danceIndex != lastDanceIndex)
         {
             if (input.danceIndex == -1)
             {
@@ -239,7 +243,7 @@ public class FusionThirdPersonMotor : NetworkBehaviour
 
             lastDanceIndex = input.danceIndex;
         }
-        else if (input.danceIndex == -1 && NetIsDancing)
+        else if (forcedDanceActive == false && input.danceIndex == -1 && NetIsDancing)
         {
             // Safety: if input says stop but state didn't update, force stop once.
             StopDance();
@@ -469,6 +473,53 @@ public class FusionThirdPersonMotor : NetworkBehaviour
         }
 
         return SabotageStunTimer.ExpiredOrNotRunning(Runner) == false;
+    }
+
+    public void RequestForcedDance(int danceIndex, float durationSeconds)
+    {
+        if (Object == null)
+        {
+            return;
+        }
+
+        if (Object.HasStateAuthority)
+        {
+            ApplyForcedDanceInternal(danceIndex, durationSeconds);
+            return;
+        }
+
+        RpcRequestForcedDance(danceIndex, durationSeconds);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RpcRequestForcedDance(int danceIndex, float durationSeconds)
+    {
+        ApplyForcedDanceInternal(danceIndex, durationSeconds);
+    }
+
+    private void ApplyForcedDanceInternal(int danceIndex, float durationSeconds)
+    {
+        if (Object == null || Object.HasStateAuthority == false || Runner == null)
+        {
+            return;
+        }
+
+        int resolvedDanceIndex = Mathf.Clamp(danceIndex, 0, 4);
+        float clampedDuration = Mathf.Clamp(durationSeconds, 0.1f, 10f);
+        NetDanceIndex = resolvedDanceIndex;
+        NetIsDancing = true;
+        ForcedDanceTimer = TickTimer.CreateFromSeconds(Runner, clampedDuration);
+        ApplyDanceStart();
+    }
+
+    private bool IsForcedDanceActive()
+    {
+        if (Runner == null)
+        {
+            return false;
+        }
+
+        return ForcedDanceTimer.ExpiredOrNotRunning(Runner) == false;
     }
 
     public void RequestMeleeMovementLock(float durationSeconds)

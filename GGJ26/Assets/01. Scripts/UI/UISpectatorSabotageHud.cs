@@ -80,25 +80,30 @@ public class UISpectatorSabotageHud : MonoBehaviour
 
     private SlotView[] CollectExistingSlots(RectTransform parent)
     {
-        var collected = new SlotView[3];
-        for (int i = 0; i < parent.childCount && i < 3; i++)
+        return new[]
         {
-            var child = parent.GetChild(i) as RectTransform;
-            if (child == null)
-            {
-                continue;
-            }
+            CollectSlot(parent, "ShoeSlot"),
+            CollectSlot(parent, "SmokeSlot"),
+            CollectSlot(parent, "DanceSlot")
+        };
+    }
 
-            collected[i] = new SlotView
-            {
-                root = child,
-                iconImage = child.Find("Icon")?.GetComponent<Image>(),
-                keyImage = child.Find("Key")?.GetComponent<Image>(),
-                keyText = child.Find("KeyText")?.GetComponent<Text>(),
-                outline = child.GetComponent<Outline>()
-            };
+    private static SlotView CollectSlot(RectTransform parent, string slotName)
+    {
+        var child = parent.Find(slotName) as RectTransform;
+        if (child == null)
+        {
+            return null;
         }
-        return collected;
+
+        return new SlotView
+        {
+            root = child,
+            iconImage = child.Find("Icon")?.GetComponent<Image>(),
+            keyImage = child.Find("Key")?.GetComponent<Image>(),
+            keyText = child.Find("KeyText")?.GetComponent<Text>(),
+            outline = child.GetComponent<Outline>()
+        };
     }
 
     private TextMeshProUGUI CreateTitle(RectTransform parent)

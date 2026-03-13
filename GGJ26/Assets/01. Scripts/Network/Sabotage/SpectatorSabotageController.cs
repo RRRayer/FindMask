@@ -268,48 +268,15 @@ public class SpectatorSabotageController : NetworkBehaviour
         Quaternion rotation = Quaternion.LookRotation(ray.direction.normalized, Vector3.up);
         RpcSpawnShoeProjectile(spawnPosition, rotation, ray.direction.normalized, shoeProjectileSpeed, shoeProjectileLifetime);
 
-        if (TryFindSeekerHitBySphereCast(ray.origin, ray.direction, shoeHitDistance, out RaycastHit hit) == false)
+        if (TryFindSabotageTargetBySphereCast(ray.origin, ray.direction, shoeHitDistance, out RaycastHit hit) == false)
         {
             if (enableDebugLogs)
             {
-                Debug.Log("[Sabotage] ShoeToss fired: no seeker hit.", this);
+                Debug.Log("[Sabotage] ShoeToss fired: no target hit.", this);
             }
             return true;
         }
-
-        var role = hit.collider.GetComponentInParent<PlayerRole>();
-        if (role == null || role.IsSeeker == false)
-        {
-            if (enableDebugLogs)
-            {
-                Debug.Log("[Sabotage] ShoeToss fired: target is not seeker.", this);
-            }
-            return true;
-        }
-
-        var motor = role.GetComponent<FusionThirdPersonMotor>();
-        if (motor == null)
-        {
-            if (enableDebugLogs)
-            {
-                Debug.Log("[Sabotage] ShoeToss rejected: seeker motor missing.", this);
-            }
-            return true;
-        }
-
-        Vector3 direction = (role.transform.position - transform.position);
-        direction.y = 0f;
-        if (direction.sqrMagnitude < 0.0001f)
-        {
-            direction = role.transform.forward;
-        }
-
-        motor.RequestSabotageStun(shoeStunSeconds, direction.normalized, shoeKnockbackSpeed);
-        if (enableDebugLogs)
-        {
-            Debug.Log($"[Sabotage] ShoeToss success: seeker={role.name}", this);
-        }
-        return true;
+        return ApplyShoeKnockbackToTarget(hit.collider, ray.direction);
     }
 
     private bool TryExecuteGhostSmoke(Ray ray)
@@ -344,6 +311,21 @@ public class SpectatorSabotageController : NetworkBehaviour
                 Debug.Log("[Sabotage] PhantomDance miss: no hit.", this);
             }
             return false;
+        }
+
+        var playerMotor = hit.collider.GetComponentInParent<FusionThirdPersonMotor>();
+        if (playerMotor != null && playerMotor.Object != null)
+        {
+            var playerElimination = playerMotor.GetComponent<PlayerElimination>();
+            if (playerElimination == null || playerElimination.IsEliminated == false)
+            {
+                playerMotor.RequestForcedDance(Random.Range(0, 5), phantomDanceDuration);
+                if (enableDebugLogs)
+                {
+                    Debug.Log($"[Sabotage] PhantomDance success: player={playerMotor.name}", this);
+                }
+                return true;
+            }
         }
 
         var npc = hit.collider.GetComponentInParent<NPCController>();
@@ -721,41 +703,68 @@ public class SpectatorSabotageController : NetworkBehaviour
         }
 
         Vector3 dir = delta / distance;
-        if (TryFindSeekerHitBySphereCast(from, dir, distance, out RaycastHit hit) == false)
+        if (TryFindSabotageTargetBySphereCast(from, dir, distance, out RaycastHit hit) == false)
         {
             return false;
         }
-
-        var role = hit.collider.GetComponentInParent<PlayerRole>();
-        if (role == null || role.IsSeeker == false)
-        {
-            return false;
-        }
-
-        var motor = role.GetComponent<FusionThirdPersonMotor>();
-        if (motor == null)
-        {
-            return false;
-        }
-
         Vector3 knockbackDir = velocity.sqrMagnitude > 0.0001f ? velocity.normalized : dir;
-        knockbackDir.y = 0f;
-        if (knockbackDir.sqrMagnitude < 0.0001f)
-        {
-            knockbackDir = role.transform.forward;
-        }
-
-        motor.RequestSabotageStun(shoeStunSeconds, knockbackDir.normalized, shoeKnockbackSpeed);
-        if (enableDebugLogs)
-        {
-            Debug.Log($"[Sabotage] Shoe projectile hit seeker: {role.name}", this);
-        }
-        return true;
+        return ApplyShoeKnockbackToTarget(hit.collider, knockbackDir);
     }
 
-    private bool TryFindSeekerHitBySphereCast(Vector3 origin, Vector3 direction, float distance, out RaycastHit seekerHit)
+    private bool ApplyShoeKnockbackToTarget(Collider hitCollider, Vector3 knockbackDirection)
     {
-        seekerHit = default;
+        if (hitCollider == null)
+        {
+            return false;
+        }
+
+        Vector3 dir = knockbackDirection;
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 0.0001f)
+        {
+            dir = transform.forward;
+        }
+
+        var role = hitCollider.GetComponentInParent<PlayerRole>();
+        if (role != null && role.Object != null)
+        {
+            var eliminationTarget = role.GetComponent<PlayerElimination>();
+            if (eliminationTarget != null && eliminationTarget.IsEliminated)
+            {
+                return false;
+            }
+
+            var motor = role.GetComponent<FusionThirdPersonMotor>();
+            if (motor == null)
+            {
+                return false;
+            }
+
+            motor.RequestSabotageStun(shoeStunSeconds, dir.normalized, shoeKnockbackSpeed);
+            if (enableDebugLogs)
+            {
+                Debug.Log($"[Sabotage] ShoeToss success: player={role.name}", this);
+            }
+            return true;
+        }
+
+        var npc = hitCollider.GetComponentInParent<NPCController>();
+        if (npc != null && npc.Object != null && npc.IsDead == false)
+        {
+            npc.RequestSabotageStun(shoeStunSeconds, dir.normalized, shoeKnockbackSpeed);
+            if (enableDebugLogs)
+            {
+                Debug.Log($"[Sabotage] ShoeToss success: npc={npc.name}", this);
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TryFindSabotageTargetBySphereCast(Vector3 origin, Vector3 direction, float distance, out RaycastHit targetHit)
+    {
+        targetHit = default;
         if (distance <= 0f)
         {
             return false;
@@ -777,13 +786,22 @@ public class SpectatorSabotageController : NetworkBehaviour
             }
 
             var role = hit.collider.GetComponentInParent<PlayerRole>();
-            if (role == null || role.IsSeeker == false)
+            if (role != null && role.Object != null)
             {
-                continue;
+                var eliminationTarget = role.GetComponent<PlayerElimination>();
+                if (eliminationTarget == null || eliminationTarget.IsEliminated == false)
+                {
+                    targetHit = hit;
+                    return true;
+                }
             }
 
-            seekerHit = hit;
-            return true;
+            var npc = hit.collider.GetComponentInParent<NPCController>();
+            if (npc != null && npc.Object != null && npc.IsDead == false)
+            {
+                targetHit = hit;
+                return true;
+            }
         }
 
         return false;
