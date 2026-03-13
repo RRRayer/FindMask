@@ -31,6 +31,29 @@ public class DeathmatchMatchController : NetworkBehaviour
     public bool IsEnabled => GameModeRuntime.IsDeathmatch;
     public Vector3 SafeZoneCenter => safeZoneCenter;
 
+    public bool TryGetLives(PlayerRef player, out int lives)
+    {
+        lives = 3;
+        if (states.TryGetValue(player.RawEncoded, out var state) == false)
+        {
+            return false;
+        }
+
+        lives = Mathf.Clamp(state.Lives, 0, 3);
+        return true;
+    }
+
+    public bool TryGetLocalPlayerLives(out int lives)
+    {
+        lives = 3;
+        if (Runner == null || Runner.IsRunning == false)
+        {
+            return false;
+        }
+
+        return TryGetLives(Runner.LocalPlayer, out lives);
+    }
+
     public override void Spawned()
     {
         if (GameModeRuntime.IsDeathmatch == false)
@@ -315,16 +338,10 @@ public class DeathmatchMatchController : NetworkBehaviour
             return;
         }
 
-        if (aliveCount > 1)
+        if (aliveCount <= 0)
         {
-            if (NetRemainingSeconds <= 0f)
-            {
-                ResolveTieBreakerAtTimeout();
-            }
-            return;
+            ResolveTieBreakerAtTimeout();
         }
-
-        ResolveTieBreakerAtTimeout();
     }
 
     private void ResolveTieBreakerAtTimeout()
