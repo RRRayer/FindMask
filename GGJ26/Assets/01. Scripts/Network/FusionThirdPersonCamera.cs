@@ -5,6 +5,15 @@ using UnityEngine.InputSystem;
 
 public class FusionThirdPersonCamera : MonoBehaviour
 {
+    public struct CameraProfileSnapshot
+    {
+        public float CameraDistance;
+        public float CameraSide;
+        public Vector3 ShoulderOffset;
+        public float VerticalArmLength;
+        public bool IsValid;
+    }
+
     [Header("Camera Binding")]
     [SerializeField] private string cameraObjectName = "PlayerFollowCamera";
     [SerializeField] private bool bindAllVirtualCameras = false;
@@ -201,6 +210,27 @@ public class FusionThirdPersonCamera : MonoBehaviour
         }
 
         lastIsSeeker = isSeeker;
+    }
+
+    public bool TryGetActiveCameraProfile(out CameraProfileSnapshot profile)
+    {
+        profile = default;
+
+        if (thirdPersonFollow == null)
+        {
+            return false;
+        }
+
+        profile = new CameraProfileSnapshot
+        {
+            CameraDistance = thirdPersonFollow.CameraDistance,
+            CameraSide = thirdPersonFollow.CameraSide,
+            ShoulderOffset = thirdPersonFollow.ShoulderOffset,
+            VerticalArmLength = thirdPersonFollow.VerticalArmLength,
+            IsValid = true
+        };
+
+        return true;
     }
 
     private static float ClampAngle(float angle, float min, float max)
